@@ -1,0 +1,48 @@
+[90m= [39m[
+    {#5351
+      +"[1mtablename[22m": "[32mcache[39m",
+    },
+    {#5349
+      +"[1mtablename[22m": "[32mcache_locks[39m",
+    },
+    {#5348
+      +"[1mtablename[22m": "[32mfailed_jobs[39m",
+    },
+    {#5353
+      +"[1mtablename[22m": "[32mjob_batches[39m",
+    },
+    {#5336
+      +"[1mtablename[22m": "[32mjobs[39m",
+    },
+    {#5354
+      +"[1mtablename[22m": "[32mmigrations[39m",
+    },
+    {#5355
+      +"[1mtablename[22m": "[32mpassword_reset_tokens[39m",
+    },
+    {#5356
+      +"[1mtablename[22m": "[32mperformances[39m",
+    },
+    {#5357
+      +"[1mtablename[22m": "[32mreview_invitations[39m",
+    },
+    {#5358
+      +"[1mtablename[22m": "[32mreviewers[39m",
+    },
+    {#5359
+      +"[1mtablename[22m": "[32mreviews[39m",
+    },
+    {#5360
+      +"[1mtablename[22m": "[32msessions[39m",
+    },
+    {#5361
+      +"[1mtablename[22m": "[32mshows[39m",
+    },
+    {#5362
+      +"[1mtablename[22m": "[32musers[39m",
+    },
+    {#5363
+      +"[1mtablename[22m": "[32mvenues[39m",
+    },
+  ]
+

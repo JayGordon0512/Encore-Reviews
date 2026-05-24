@@ -12,8 +12,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('reviewers', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
+            $table->string('email_hash')->nullable();
+            $table->string('display_name')->nullable();
+            $table->unsignedInteger('trust_score')->default(0);
             $table->timestamps();
+
+            $table->index('email_hash');
         });
     }
 

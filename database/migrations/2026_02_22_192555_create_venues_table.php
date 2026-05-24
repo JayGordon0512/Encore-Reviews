@@ -12,7 +12,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('venues', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
+            $table->string('name');
+            $table->string('slug')->nullable()->unique();
+            $table->string('city')->nullable();
+            $table->string('postcode')->nullable();
+            $table->string('country')->nullable();
+            $table->string('website_url')->nullable();
+            $table->text('description')->nullable();
+            $table->string('hero_image_path')->nullable();
             $table->timestamps();
         });
     }

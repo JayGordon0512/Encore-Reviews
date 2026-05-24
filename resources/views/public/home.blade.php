@@ -30,7 +30,7 @@
     </p>
 
     <div class="er-hero__actions">
-      <a class="er-btn" href="#organisers">For organisers</a>
+      <a class="er-btn" href="{{ route('shows.index') }}">Browse shows</a>
       <a class="er-btn er-btn--ghost" href="#how-it-works">How it works</a>
     </div>
   </div>

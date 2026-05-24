@@ -8,6 +8,18 @@ use Illuminate\Http\Request;
 
 class ShowController extends Controller
 {
+    public function index()
+    {
+        $shows = Show::query()
+            ->where('status', '!=', 'archived')
+            ->orderBy('title')
+            ->get();
+
+        return view('public.shows', [
+            'shows' => $shows,
+        ]);
+    }
+
     public function show(Request $request, Show $show)
     {
         $show->load(['performances.reviews.reviewer']);

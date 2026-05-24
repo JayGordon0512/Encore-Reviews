@@ -1,0 +1,31 @@
+<?php
+
+namespace App\Http\Controllers\Web;
+
+use App\Http\Controllers\Controller;
+use App\Models\Show;
+use Illuminate\Http\Request;
+
+class ShowController extends Controller
+{
+    public function show(Request $request, Show $show)
+    {
+        $show->load(['performances.reviews.reviewer']);
+
+        $reviews = $show->reviews
+            ->sortByDesc('submitted_at')
+            ->values();
+
+        $averageRating = $reviews->avg('rating');
+        $recommendCount = $reviews->where('would_recommend', true)->count();
+        $reviewCount = $reviews->count();
+
+        return view('public.show', [
+            'show' => $show,
+            'reviews' => $reviews,
+            'averageRating' => $averageRating,
+            'recommendCount' => $recommendCount,
+            'reviewCount' => $reviewCount,
+        ]);
+    }
+}

@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Performance;
+use App\Models\Review;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Show extends Model
 {
@@ -37,5 +40,10 @@ class Show extends Model
     public function performances(): HasMany
     {
         return $this->hasMany(Performance::class);
+    }
+
+    public function reviews(): HasManyThrough
+    {
+        return $this->hasManyThrough(Review::class, Performance::class);
     }
 }

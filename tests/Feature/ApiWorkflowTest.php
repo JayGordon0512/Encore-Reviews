@@ -116,5 +116,69 @@ class ApiWorkflowTest extends TestCase
                 ->first()
                 ->used_at
         );
+
+        $reuseResponse = $this->postJson('/api/reviews', [
+            'invitation_token' => $token,
+            'email' => 'reviewer@example.com',
+            'rating' => 4,
+            'would_recommend' => true,
+            'content' => 'Trying to submit twice.',
+        ]);
+
+        $reuseResponse->assertStatus(422)
+            ->assertJson([
+                'ok' => false,
+                'message' => 'Invalid or expired invitation token.',
+            ]);
+
+        $this->assertDatabaseCount('reviews', 1);
+    }
+
+    public function test_review_submission_rejects_email_that_does_not_match_invitation(): void
+    {
+        Config::set('encore.ticketpal.secret', 'test-secret');
+
+        $show = Show::create([
+            'title' => 'Email Match Show',
+            'ticket_url' => 'https://tickets.example.com/email-match',
+            'provider_source' => 'ticketpal',
+            'provider_event_id' => 'event-email-match',
+            'status' => 'upcoming',
+            'slug' => 'email-match-show',
+        ]);
+
+        $performance = Performance::create([
+            'show_id' => $show->id,
+            'provider_source' => 'ticketpal',
+            'provider_event_id' => 'perf-email-match',
+            'provider_performance_id' => 'perf-email-match',
+            'status' => 'scheduled',
+        ]);
+
+        $invitationResponse = $this->withHeaders([
+            'X-TicketPal-Secret' => 'test-secret',
+        ])->postJson('/api/ticketpal/invitations', [
+            'performance_id' => $performance->id,
+            'email' => 'invited@example.com',
+        ]);
+
+        $token = $invitationResponse->json('invitation.token');
+
+        $reviewResponse = $this->postJson('/api/reviews', [
+            'invitation_token' => $token,
+            'email' => 'different@example.com',
+            'rating' => 5,
+            'would_recommend' => true,
+            'content' => 'This should not be accepted.',
+        ]);
+
+        $reviewResponse->assertStatus(422)
+            ->assertJson([
+                'ok' => false,
+                'message' => 'Invitation token does not match this email address.',
+            ]);
+
+        $this->assertDatabaseCount('reviews', 0);
+        $this->assertNull(ReviewInvitation::query()->where('performance_id', $performance->id)->first()->used_at);
     }
 }

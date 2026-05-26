@@ -48,6 +48,7 @@ class ShowPageTest extends TestCase
             'content' => 'The show was outstanding.',
             'submitted_at' => now(),
             'verified' => true,
+            'moderation_status' => 'approved',
         ]);
 
         $response = $this->get('/shows/test-audience-show');
@@ -56,5 +57,62 @@ class ShowPageTest extends TestCase
         $response->assertSee('Test Audience Show');
         $response->assertSee('The show was outstanding.');
         $response->assertSee('5/5');
+    }
+
+    public function test_show_page_excludes_pending_reviews_from_public_scores(): void
+    {
+        $show = Show::create([
+            'title' => 'Moderated Audience Show',
+            'slug' => 'moderated-audience-show',
+            'summary' => 'A show with mixed moderation states.',
+            'ticket_url' => 'https://tickets.example.com/moderated-audience-show',
+            'provider_source' => 'ticketpal',
+            'provider_event_id' => 'event-test-2',
+            'status' => 'upcoming',
+        ]);
+
+        $performance = Performance::create([
+            'show_id' => $show->id,
+            'provider_source' => 'ticketpal',
+            'provider_event_id' => 'perf-test-2',
+            'provider_performance_id' => 'perf-test-2',
+            'status' => 'scheduled',
+        ]);
+
+        $reviewer = Reviewer::create([
+            'display_name' => 'Moderated Reviewer',
+            'email_hash' => hash('sha256', 'moderated@example.com'),
+        ]);
+
+        Review::create([
+            'performance_id' => $performance->id,
+            'reviewer_id' => $reviewer->id,
+            'rating' => 5,
+            'would_recommend' => true,
+            'content' => 'This approved review is visible.',
+            'submitted_at' => now(),
+            'verified' => true,
+            'moderation_status' => 'approved',
+        ]);
+
+        Review::create([
+            'performance_id' => $performance->id,
+            'reviewer_id' => $reviewer->id,
+            'rating' => 1,
+            'would_recommend' => false,
+            'content' => 'This pending review should stay private.',
+            'submitted_at' => now(),
+            'verified' => true,
+            'moderation_status' => 'pending',
+        ]);
+
+        $response = $this->get('/shows/moderated-audience-show');
+
+        $response->assertStatus(200);
+        $response->assertSee('This approved review is visible.');
+        $response->assertDontSee('This pending review should stay private.');
+        $response->assertSee('5.0/5');
+        $response->assertSee('Based on 1 review.');
+        $response->assertSee('Recommend rate: 100%');
     }
 }

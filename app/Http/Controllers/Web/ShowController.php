@@ -22,11 +22,11 @@ class ShowController extends Controller
 
     public function show(Request $request, Show $show)
     {
-        $show->load(['performances.reviews.reviewer']);
-
-        $reviews = $show->reviews
-            ->sortByDesc('submitted_at')
-            ->values();
+        $reviews = $show->reviews()
+            ->with('reviewer')
+            ->where('moderation_status', 'approved')
+            ->orderByDesc('submitted_at')
+            ->get();
 
         $averageRating = $reviews->avg('rating');
         $recommendCount = $reviews->where('would_recommend', true)->count();

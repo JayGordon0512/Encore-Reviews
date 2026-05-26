@@ -12,11 +12,7 @@
 <header class="er-header">
   <div class="er-container er-header__inner">
     <a class="er-header__brand" href="{{ route('home') }}">
-      <img class="er-header__mark" src="{{ asset('assets/encore-icon.png') }}" alt="Encore Reviews">
-      <span class="er-header__text">
-        <span class="er-header__title">Encore Reviews</span>
-        <span class="er-header__tag">Powered by TicketPal</span>
-      </span>
+      <img class="er-header__logo" src="{{ asset('assets/encore-logo-header-900x225.png') }}" alt="Encore Reviews">
     </a>
 
     <nav class="er-nav" aria-label="Primary">
@@ -26,25 +22,24 @@
     </nav>
 
     <button
-  class="er-menuBtn"
-  type="button"
-  aria-label="Open menu"
-  aria-controls="erMobileMenu"
-  aria-expanded="false"
-  data-er-menu-button
-></button>
-
+      class="er-menuBtn"
+      type="button"
+      aria-label="Open menu"
+      aria-controls="erMobileMenu"
+      aria-expanded="false"
+      data-er-menu-button
+    ></button>
   </div>
   <div class="er-mobileMenu" id="erMobileMenu" data-er-mobile-menu>
-  <div class="er-container er-mobileMenu__inner">
-    <a class="er-mobileMenu__link" href="{{ route('shows.index') }}">Shows</a>
-    <a class="er-mobileMenu__link" href="{{ route('review.submit') }}">Submit review</a>
-    <a class="er-mobileMenu__link" href="#footer">Contact</a>
+    <div class="er-container er-mobileMenu__inner">
+      <a class="er-mobileMenu__link" href="{{ route('shows.index') }}">Shows</a>
+      <a class="er-mobileMenu__link" href="{{ route('review.submit') }}">Submit review</a>
+      <a class="er-mobileMenu__link" href="#footer">Contact</a>
+    </div>
   </div>
-</div>
 </header>
 <main class="er-main">
-    @yield('content')
-  </main>
+  @yield('content')
+</main>
 </body>
 </html>

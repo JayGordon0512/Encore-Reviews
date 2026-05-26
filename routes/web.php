@@ -6,6 +6,7 @@ use App\Http\Controllers\Web\ReviewSubmissionController;
 use App\Http\Controllers\Web\ShowController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/about', [HomeController::class, 'about'])->name('about');
 Route::get('/shows', [ShowController::class, 'index'])->name('shows.index');
 Route::get('/shows/{show:slug}', [ShowController::class, 'show'])->name('shows.show');
 Route::get('/review/submit', [ReviewSubmissionController::class, 'show'])->name('review.submit');

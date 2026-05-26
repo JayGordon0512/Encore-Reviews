@@ -58,7 +58,7 @@ html{ scroll-padding-top: 82px; }
 }
 
 .er-header__logo{
-  width: min(230px, 54vw);
+  width: min(300px, 60vw);
   height: auto;
   display:block;
 }
@@ -399,7 +399,7 @@ textarea.er-input{
   }
 
   .er-header__logo{
-    width:min(190px, 58vw);
+    width:min(240px, 64vw);
   }
 
   .er-nav{

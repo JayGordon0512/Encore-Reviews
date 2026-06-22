@@ -39,12 +39,7 @@
     @else
       <div class="er-grid">
         @foreach($shows as $show)
-          <article class="er-card">
-            <h3>{{ $show->title }}</h3>
-            <p>{{ $show->summary ?? (isset($show->description) ? substr($show->description, 0, 120) . (strlen($show->description) > 120 ? '…' : '') : 'No summary available.') }}</p>
-            <p class="er-card__meta"><strong>Status:</strong> {{ strtoupper(str_replace('_', ' ', $show->status)) }}</p>
-            <a class="er-btn" href="{{ route('shows.show', $show) }}">View show</a>
-          </article>
+          @include('public.partials.show-card', ['show' => $show])
         @endforeach
       </div>
     @endif

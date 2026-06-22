@@ -10,6 +10,9 @@ class HomeController extends Controller
     public function index()
     {
         $shows = Show::query()
+            ->with(['reviews' => function ($query): void {
+                $query->where('moderation_status', 'approved');
+            }])
             ->where('status', '!=', 'archived')
             ->orderBy('title')
             ->get();

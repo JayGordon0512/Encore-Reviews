@@ -24,6 +24,7 @@ class ShowUpsertController extends Controller
             'status' => ['sometimes', 'nullable', 'in:upcoming,now_playing,archived'],
             'primary_image_path' => ['sometimes', 'nullable', 'string'],
             'ticket_url_source' => ['sometimes', 'nullable', 'string'],
+            'organisation_id' => ['sometimes', 'nullable', 'uuid', 'exists:organisations,id'],
         ]);
 
         $providerSource = 'ticketpal';
@@ -50,6 +51,10 @@ class ShowUpsertController extends Controller
                 }
             }
 
+            if (array_key_exists('organisation_id', $validated)) {
+                $mutable['organisation_id'] = $validated['organisation_id'];
+            }
+
             if ($show !== null) {
                 if (($show->slug === null || $show->slug === '') && array_key_exists('slug', $validated)) {
                     $show->slug = $this->generateUniqueSlug($validated['slug']);
@@ -66,6 +71,7 @@ class ShowUpsertController extends Controller
                 'provider_event_id' => $providerEventId,
                 'slug' => $this->generateUniqueSlug($validated['slug'] ?? $validated['title']),
                 'status' => $mutable['status'] ?? 'upcoming',
+                'organisation_id' => $validated['organisation_id'] ?? null,
             ];
 
             $show = Show::create($createData);
@@ -82,6 +88,7 @@ class ShowUpsertController extends Controller
                 'ticket_url' => $show->ticket_url,
                 'provider_source' => $show->provider_source,
                 'provider_event_id' => $show->provider_event_id,
+                'organisation_id' => $show->organisation_id,
                 'updated_at' => $show->updated_at,
             ],
             'created' => $created,

@@ -43,6 +43,14 @@ Run migrations:
 php artisan migrate
 ```
 
+Create the first Encore super administrator:
+
+```bash
+php artisan encore:create-super-admin admin@example.com --name="Encore Admin"
+```
+
+The command securely prompts for a password. Further organisations and customer users can then be created through `/admin/encore/accounts`.
+
 ## Build and run
 
 ```bash

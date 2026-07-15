@@ -19,6 +19,11 @@
       <a class="er-nav__link" href="{{ route('shows.index') }}">Shows</a>
       <a class="er-nav__link" href="{{ route('about') }}">About</a>
       <a class="er-nav__link" href="{{ route('review.submit') }}">Submit review</a>
+      @auth
+        <a class="er-nav__link" href="{{ route('admin.dashboard') }}">Admin</a>
+      @else
+        <a class="er-nav__link" href="{{ route('login') }}">Login</a>
+      @endauth
       <a class="er-nav__link" href="#footer">Contact</a>
     </nav>
 
@@ -36,6 +41,11 @@
       <a class="er-mobileMenu__link" href="{{ route('shows.index') }}">Shows</a>
       <a class="er-mobileMenu__link" href="{{ route('about') }}">About</a>
       <a class="er-mobileMenu__link" href="{{ route('review.submit') }}">Submit review</a>
+      @auth
+        <a class="er-mobileMenu__link" href="{{ route('admin.dashboard') }}">Admin</a>
+      @else
+        <a class="er-mobileMenu__link" href="{{ route('login') }}">Login</a>
+      @endauth
       <a class="er-mobileMenu__link" href="#footer">Contact</a>
     </div>
   </div>

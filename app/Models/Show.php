@@ -2,11 +2,10 @@
 
 namespace App\Models;
 
-use App\Models\Performance;
-use App\Models\Review;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
@@ -31,6 +30,7 @@ class Show extends Model
         'ticket_url_last_synced_at',
         'provider_source',
         'provider_event_id',
+        'organisation_id',
     ];
 
     protected $casts = [
@@ -40,6 +40,11 @@ class Show extends Model
     public function performances(): HasMany
     {
         return $this->hasMany(Performance::class);
+    }
+
+    public function organisation(): BelongsTo
+    {
+        return $this->belongsTo(Organisation::class);
     }
 
     public function reviews(): HasManyThrough

@@ -2,12 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Models\Organisation;
 use App\Models\Performance;
 use App\Models\ReviewInvitation;
 use App\Models\Show;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class ApiWorkflowTest extends TestCase
@@ -17,12 +17,17 @@ class ApiWorkflowTest extends TestCase
     public function test_ticketpal_show_upsert_creates_and_updates_show(): void
     {
         Config::set('encore.ticketpal.secret', 'test-secret');
+        $organisation = Organisation::create([
+            'name' => 'TicketPal Theatre',
+            'is_active' => true,
+        ]);
 
         $payload = [
             'provider_event_id' => 'ticketpal-123',
             'title' => 'Test Show',
             'ticket_url' => 'https://tickets.example.com/test-show',
             'status' => 'upcoming',
+            'organisation_id' => $organisation->id,
         ];
 
         $response = $this->withHeaders([
@@ -33,11 +38,19 @@ class ApiWorkflowTest extends TestCase
             ->assertJson([
                 'ok' => true,
                 'created' => true,
-                'show' => ['title' => 'Test Show', 'provider_source' => 'ticketpal'],
+                'show' => [
+                    'title' => 'Test Show',
+                    'provider_source' => 'ticketpal',
+                    'organisation_id' => $organisation->id,
+                ],
             ]);
 
         $showId = $response->json('show.id');
         $this->assertNotEmpty($showId);
+        $this->assertDatabaseHas('shows', [
+            'id' => $showId,
+            'organisation_id' => $organisation->id,
+        ]);
 
         $response = $this->withHeaders([
             'X-TicketPal-Secret' => 'test-secret',

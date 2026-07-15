@@ -30,6 +30,7 @@ class Performance extends Model
 
     protected $casts = [
         'starts_at' => 'datetime',
+        'ends_at' => 'datetime',
         'provider_updated_at' => 'datetime',
     ];
 

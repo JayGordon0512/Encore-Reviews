@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api\TicketPal;
 
 use App\Http\Controllers\Controller;
-use App\Models\Performance;
 use App\Models\ReviewInvitation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

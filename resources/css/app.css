@@ -307,11 +307,37 @@ html{ scroll-padding-top: 82px; }
 .er-cardScore{
   color: var(--ink);
   font-weight: 750;
+  display:grid;
+  gap: 6px;
 }
 
-.er-cardScore__value{
-  font-size: 1.35rem;
-  line-height:1;
+.er-starScore__stars{
+  display:flex;
+  align-items:center;
+  gap: 4px;
+}
+
+.er-starScore__star{
+  width: 22px;
+  height: 22px;
+  display:block;
+  filter: grayscale(1);
+  opacity: 0.24;
+}
+
+.er-starScore__star.is-filled{
+  filter: none;
+  opacity: 1;
+}
+
+.er-starScore--large .er-starScore__star{
+  width: 36px;
+  height: 36px;
+}
+
+.er-starScore--review .er-starScore__star{
+  width: 18px;
+  height: 18px;
 }
 
 .er-cardScore__meta{
@@ -339,6 +365,10 @@ html{ scroll-padding-top: 82px; }
 
 .er-reviewMeta{
   margin: 6px 0 10px;
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  flex-wrap:wrap;
   color: var(--muted);
   font-size: 0.95rem;
 }
@@ -361,6 +391,56 @@ html{ scroll-padding-top: 82px; }
   color: var(--danger);
   font-size: 0.92rem;
   font-weight: 700;
+}
+
+.er-reviewPage__inner{
+  max-width: 1120px;
+}
+
+.er-reviewShell{
+  display:grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 24px;
+  align-items:start;
+}
+
+.er-reviewForm{
+  display:grid;
+  gap: 18px;
+}
+
+.er-reviewContext{
+  display:grid;
+  gap: 3px;
+  padding: 16px;
+  border: 1px solid rgba(201,154,46,0.42);
+  border-radius: 8px;
+  background: rgba(201,154,46,0.1);
+  color: var(--ink);
+}
+
+.er-reviewContext strong{
+  font-size: 1.25rem;
+  line-height: 1.2;
+}
+
+.er-reviewContext__label{
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.er-reviewContext--muted{
+  border-color: var(--line);
+  background: var(--soft);
+}
+
+.er-formGrid{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
 }
 
 .er-form{
@@ -406,12 +486,151 @@ textarea.er-input{
   flex-wrap:wrap;
 }
 
+.er-choiceGroup--cards{
+  gap: 10px;
+}
+
 .er-choice{
   display:inline-flex;
   align-items:center;
   gap:8px;
   color: var(--text);
   font-weight: 650;
+}
+
+.er-choice--card{
+  min-width: 112px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.er-choice--card:has(input:checked){
+  border-color: var(--gold);
+  background: rgba(201,154,46,0.1);
+  color: var(--ink);
+}
+
+.er-ratingGroup{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  flex-wrap:wrap;
+}
+
+.er-ratingChoice{
+  width: 54px;
+  height: 54px;
+  display:grid;
+  place-items:center;
+  position:relative;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background:#fff;
+  cursor:pointer;
+}
+
+.er-ratingChoice input{
+  position:absolute;
+  inset:0;
+  opacity:0;
+  cursor:pointer;
+}
+
+.er-ratingChoice img{
+  width: 30px;
+  height: 30px;
+  display:block;
+  filter: grayscale(1);
+  opacity: 0.34;
+}
+
+.er-ratingChoice span{
+  position:absolute;
+  right: 5px;
+  bottom: 2px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.er-ratingChoice:has(input:checked),
+.er-ratingChoice:has(input:focus-visible){
+  border-color: var(--gold);
+  outline: 3px solid rgba(201,154,46,0.2);
+}
+
+.er-ratingChoice:has(input:checked) img{
+  filter:none;
+  opacity:1;
+}
+
+.er-ratingChoice:has(input:checked) span{
+  color: var(--ink);
+}
+
+.er-tagChoiceGroup{
+  display:flex;
+  gap: 8px;
+  flex-wrap:wrap;
+}
+
+.er-tagChoice{
+  display:inline-flex;
+  align-items:center;
+  gap: 7px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background:#fff;
+  color: var(--text);
+  font-size: 0.94rem;
+  font-weight: 650;
+}
+
+.er-tagChoice:has(input:checked){
+  border-color: var(--gold);
+  background: rgba(201,154,46,0.1);
+  color: var(--ink);
+}
+
+.er-reviewForm__actions{
+  display:flex;
+  align-items:center;
+  gap: 14px;
+  flex-wrap:wrap;
+}
+
+.er-reviewForm__note{
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.er-reviewAside{
+  padding: 4px 0;
+}
+
+.er-reviewAside h2{
+  margin:0 0 10px;
+  color: var(--ink);
+  font-size: 1.25rem;
+}
+
+.er-reviewAside p{
+  margin:0 0 14px;
+  color: var(--text);
+}
+
+.er-reviewAside ul{
+  margin:0;
+  padding-left: 20px;
+  color: var(--muted);
+}
+
+.er-reviewAside li + li{
+  margin-top: 8px;
 }
 
 .er-formResult{
@@ -752,7 +971,14 @@ textarea.er-input{
     padding: 42px 0;
   }
 
+  .er-reviewShell,
+  .er-formGrid{
+    grid-template-columns: 1fr;
+  }
 
+  .er-reviewAside{
+    order:-1;
+  }
 
   .er-adminHeader,
   .er-adminListItem{

@@ -56,7 +56,9 @@ class ShowPageTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('Test Audience Show');
         $response->assertSee('The show was outstanding.');
-        $response->assertSee('5/5');
+        $response->assertSee('Encore score 5.0 out of 5');
+        $response->assertSee('Review rating 5 out of 5');
+        $response->assertDontSee('Rated 5/5');
     }
 
     public function test_show_page_excludes_pending_reviews_from_public_scores(): void
@@ -111,7 +113,7 @@ class ShowPageTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('This approved review is visible.');
         $response->assertDontSee('This pending review should stay private.');
-        $response->assertSee('5.0/5');
+        $response->assertSee('Encore score 5.0 out of 5');
         $response->assertSee('Based on 1 review.');
         $response->assertSee('Recommend rate: 100%');
     }

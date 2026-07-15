@@ -13,9 +13,12 @@
 
   <div class="er-showCard__footer">
     @if($reviewCount > 0)
-      <div class="er-cardScore" aria-label="Encore score {{ number_format($averageRating, 1) }} out of 5 from {{ $reviewCount }} {{ \Illuminate\Support\Str::plural('review', $reviewCount) }}">
-        <span class="er-cardScore__value">{{ number_format($averageRating, 1) }}</span>
-        <span class="er-cardScore__meta">/5 · {{ $reviewCount }} {{ \Illuminate\Support\Str::plural('review', $reviewCount) }}</span>
+      <div class="er-cardScore">
+        @include('public.partials.encore-stars', [
+          'score' => $averageRating,
+          'label' => 'Encore score '.number_format($averageRating, 1).' out of 5 from '.$reviewCount.' '.\Illuminate\Support\Str::plural('review', $reviewCount),
+        ])
+        <span class="er-cardScore__meta">{{ $reviewCount }} {{ \Illuminate\Support\Str::plural('review', $reviewCount) }}</span>
       </div>
     @else
       <div class="er-cardScore er-cardScore--empty">No reviews yet</div>

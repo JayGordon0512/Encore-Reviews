@@ -73,8 +73,9 @@ class ShowsIndexTest extends TestCase
         $response = $this->get('/');
 
         $response->assertStatus(200);
-        $response->assertSee('5.0');
-        $response->assertSee('/5 · 1 review');
+        $response->assertSee('Encore score 5.0 out of 5 from 1 review');
+        $response->assertSee('1 review');
+        $response->assertDontSee('5.0 /5');
         $response->assertDontSee('/5 · 2 reviews');
     }
 

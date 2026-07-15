@@ -9,11 +9,11 @@ Encore has three caller classes:
 | Public audience | None; review submission requires invitation proof | Public pages and `POST /api/reviews` |
 | Organisation administrator | Laravel session | Active user, active organisation, organisation-owned data |
 | Encore super administrator | Laravel session | Active user and `super_admin` role |
-| TicketPal integration | Shared secret header | `/api/ticketpal/*` route group |
+| TicketPal integration | Shared secret plus signed event headers | `/api/ticketpal/*` route group and provider event identity |
 
 ## TicketPal authentication
 
-TicketPal routes require `X-TicketPal-Secret`. The middleware compares it with `ENCORE_TICKETPAL_SECRET` using `hash_equals`. Missing configuration, a missing header, or a mismatch returns HTTP 401 with:
+TicketPal routes require `X-TicketPal-Secret` plus an event ID, fresh Unix timestamp, and HMAC-SHA256 signature over the timestamp, event ID, and raw body. Secrets and signatures are compared in constant time. Missing configuration, a missing header, an old timestamp, or a mismatch returns HTTP 401 with:
 
 ```json
 {
@@ -22,7 +22,9 @@ TicketPal routes require `X-TicketPal-Secret`. The middleware compares it with `
 }
 ```
 
-The current implementation uses one application-wide TicketPal secret. It does not provide per-organisation credentials, key identifiers, rotation overlap, request signatures, replay protection, IP allow-listing, or provider-specific principals.
+Authenticated events are registered before business processing. Database uniqueness prevents the same provider event from executing twice; conflicting payloads are rejected. Original JSON responses are encrypted for bounded replay, while raw request payloads are not retained. See [ADR-011](../02-ADR/ADR-011-signed-provider-event-ingestion.md) and [ADR-014](../02-ADR/ADR-014-provider-event-store.md).
+
+The current implementation still uses one application-wide TicketPal secret. It does not provide per-organisation credentials, key identifiers, rotation overlap, IP allow-listing, or provider-specific principals.
 
 ## Administrative authentication
 
@@ -47,13 +49,13 @@ The role column is not a database enum. Code recognizes super administrators thr
 
 ## Tenant isolation
 
-Organisation isolation is implemented explicitly:
+Organisation isolation uses Laravel Policies for administrative authorization plus explicit scoped queries:
 
 - dashboard show queries use `whereBelongsTo($organisation)`;
 - dashboard review queries traverse `review → performance → show → organisation`;
-- review moderation loads the review's show and compares its `organisation_id` with the signed-in user's `organisation_id`;
-- nested organisation-user mutations verify that the user belongs to the route organisation;
-- show removal verifies that the show belongs to the route organisation;
+- `ReviewPolicy` validates review ownership and returns a not-found denial across tenant boundaries;
+- `OrganisationPolicy` governs directories, lifecycle operations, support access, dashboards, and nested users;
+- `ShowPolicy` validates assignment and removal against both the show and route organisation;
 - assignment accepts only currently unassigned shows;
 - venue synchronization resolves venues by `organisation_id + slug`.
 
@@ -61,7 +63,13 @@ This is not automatic row-level tenancy. New organisation-sensitive queries must
 
 ## Support access
 
-Encore super administrators can open a selected organisation's dashboard using a read-only support route. The view hides moderation actions, and the moderation controller rejects super administrators with HTTP 403. The implementation does not impersonate the customer user or alter the authenticated principal.
+Encore super administrators can open a selected organisation's dashboard using a read-only support route. The view hides moderation actions, and the moderation policy rejects super administrators with HTTP 403. The implementation does not impersonate the customer user or alter the authenticated principal. Each support inspection creates an audit record.
+
+## Administrative audit logging
+
+Implemented administrative mutations create an `audit_logs` row inside the same transaction as the state change. Records identify the actor, organisation, action, entity, selected before/after state, request metadata, time, and correlation ID. Organisation/user management, show ownership assignment, review moderation, and read-only support inspection are covered.
+
+Snapshots use explicit allowlists, and the logger defensively removes keys whose names indicate passwords, secrets, tokens, authorization data, or cookies. The Eloquent model rejects updates and deletes. Database-role restrictions, tamper-evident external retention, and a retention schedule are not yet implemented.
 
 ## Invitation and reviewer data
 
@@ -85,7 +93,7 @@ These are current-state limitations, not implemented controls:
 
 - one shared TicketPal secret for the whole application;
 - no rate limiting configured specifically for review or provider endpoints;
-- no administrative audit log;
+- no database-role or external tamper-evidence control for audit records;
 - no MFA, SSO, or password reset workflow;
 - no global tenant scope or database row-level security;
 - no formal secret rotation workflow in the application;

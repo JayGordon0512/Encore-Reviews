@@ -16,6 +16,7 @@ Last verified against the codebase: 15 July 2026.
 | [03 — API](03-API/README.md) | Current HTTP API contracts and integration behavior |
 | [04 — Domain](04-Domain/README.md) | Domain entities, relationships, invariants, and lifecycles |
 | [05 — Operations](05-Operations/README.md) | Local operation, deployment checks, migrations, testing, and troubleshooting |
+| [Sprint 0 hardening report](05-Operations/sprint-0-hardening-report.md) | Dependency review, CI, migration evidence, authorization audit, and remaining risks |
 | [06 — Roadmap](06-Roadmap/README.md) | Prioritised capability portfolio, delivery dependencies, and acceptance gates |
 
 ## Documentation policy

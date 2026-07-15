@@ -45,6 +45,8 @@ Set an application key and a non-placeholder provider secret:
 ENCORE_TICKETPAL_SECRET=<strong-shared-secret>
 ```
 
+TicketPal must also sign every event as documented in the [HTTP API reference](../03-API/README.md). The application defaults to a 300-second signature window, three processing attempts, and seven-day encrypted response replay retention.
+
 Start the stack and initialize the application:
 
 ```bash
@@ -120,9 +122,15 @@ php artisan migrate --force
 
 The repository does not define automated backup or restore jobs. A production operator must establish and test PostgreSQL backup, retention, encryption, and recovery procedures before relying on this service for production data.
 
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on every push and pull request without deploying. The single fail-fast job uses PHP 8.5, Node.js 22, and a PostgreSQL 18 service. It installs locked dependencies and then runs dependency audits, all migrations, the full test suite, Pint, strict Composer validation, and the production Vite build.
+
+The job has read-only repository-content permission and uses an isolated CI database. A passing workflow proves clean installation and migration on PostgreSQL; it does not prove upgrade behavior against production data, backup restoration, high availability, or deployment readiness.
+
 ## Testing and quality gates
 
-The test configuration uses in-memory SQLite, array cache/session/mail, and the synchronous queue driver. It does not exercise PostgreSQL-specific runtime behavior.
+The default local test configuration uses in-memory SQLite, array cache/session/mail, and the synchronous queue driver. CI additionally exercises the suite and migrations against PostgreSQL 18.
 
 Run the complete test suite:
 
@@ -146,6 +154,13 @@ Build production assets:
 
 ```bash
 npm run build
+```
+
+Audit dependency advisories:
+
+```bash
+composer audit --locked
+npm audit
 ```
 
 There is no PHPStan, Psalm, Larastan, or JavaScript test configuration in the current repository. Pint, PHPUnit, and the production Vite build are the configured quality checks.
@@ -210,7 +225,7 @@ Start the Docker daemon or Docker Desktop, then verify:
 
 ### TicketPal API returns 401
 
-Verify that `ENCORE_TICKETPAL_SECRET` is configured in the application container and that the request sends the same value in `X-TicketPal-Secret`. Clear cached configuration after changing environment values:
+Verify that `ENCORE_TICKETPAL_SECRET` is configured, `X-TicketPal-Secret` matches, the HMAC uses the exact raw request body, and the sender clock is within the configured tolerance. Clear cached configuration after changing environment values:
 
 ```bash
 ./vendor/bin/sail artisan config:clear

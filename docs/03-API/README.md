@@ -10,13 +10,18 @@ This document describes the JSON API implemented under `/api`. There is no API v
 - IDs are Encore UUIDs unless stated otherwise.
 - TicketPal endpoints currently return HTTP 200 for both created and updated upserts.
 
-## TicketPal authentication
+## TicketPal authentication and event identity
 
-These endpoints require:
+Every TicketPal request requires these headers:
 
 ```http
 X-TicketPal-Secret: <ENCORE_TICKETPAL_SECRET>
+X-TicketPal-Event-ID: <unique-provider-delivery-id>
+X-TicketPal-Timestamp: <10-digit-unix-timestamp>
+X-TicketPal-Signature: sha256=<hex-hmac>
 ```
+
+Calculate the HMAC-SHA256 signature with `ENCORE_TICKETPAL_SECRET` over the exact bytes `<timestamp>.<event-id>.<raw-request-body>`. The `sha256=` prefix is optional. The timestamp must be within the configured tolerance, five minutes by default. Event IDs may contain letters, digits, `.`, `_`, `:`, and `-`, and are limited to 255 characters. All three TicketPal routes require both the existing secret and this event signature; callers must update before deploying this contract.
 
 The protected endpoints are:
 
@@ -32,6 +37,18 @@ Missing or invalid credentials return HTTP 401:
   "message": "Unauthorized"
 }
 ```
+
+## Provider idempotency and replay
+
+`provider + X-TicketPal-Event-ID` identifies one delivery across all TicketPal routes. Encore stores a hash of the raw payload before processing:
+
+- a duplicate with the same payload does not execute the controller again;
+- while the original response is retained, a processed duplicate returns that response with `X-Provider-Event-Replayed: true`;
+- reuse of an ID with different payload bytes returns HTTP 409;
+- concurrent processing, exhausted failures, or an expired replay response return HTTP 409;
+- a failed event may be retried up to three total attempts.
+
+Every registered event has a stable `X-Correlation-ID`. Raw request payloads are not retained. Original response bodies are application-encrypted and retained for seven days by default. See [ADR-014](../02-ADR/ADR-014-provider-event-store.md).
 
 ## Upsert a TicketPal show
 
@@ -163,7 +180,7 @@ HTTP 422 is returned when:
 POST /api/ticketpal/invitations
 ```
 
-This endpoint creates a new invitation on every successful request; it is not an upsert.
+This endpoint creates a new invitation for a new provider event ID. Repeating the same signed provider event replays the original response and does not create another invitation.
 
 ### Request fields
 
@@ -249,6 +266,6 @@ Invalid, expired, or already-used tokens return HTTP 422 with `Invalid or expire
 ## Compatibility and lifecycle
 
 - The API is currently unversioned; breaking changes require coordinated provider changes.
-- There is no webhook signature, replay ID, bulk endpoint, pagination, or asynchronous acknowledgement.
+- There is no bulk endpoint, pagination, or asynchronous acknowledgement.
 - The API does not expose list or read endpoints.
-- Provider retry safety exists for show and performance upserts, not invitation creation or review submission.
+- Provider retry safety applies to all TicketPal write routes through the event store. Review submission remains governed by single-use invitation-token consumption.

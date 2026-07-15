@@ -23,12 +23,12 @@ The roadmap distinguishes implemented behavior from proposed work. A proposed AP
 
 | Priority | Capability | Current state | Intended outcome |
 | --- | --- | --- | --- |
-| P0 | C01 — Platform assurance and operability | Development baseline exists | A secure, observable, recoverable production foundation |
-| P0 | C02 — Organisation identity and tenant governance | Core access implemented | Consistent lifecycle, authorization, and accountability for every tenant |
+| P0 | C01 — Platform assurance and operability | PostgreSQL CI and dependency gates implemented | A secure, observable, recoverable production foundation |
+| P0 | C02 — Organisation identity and tenant governance | Policy authorization and admin audit implemented | Consistent lifecycle, authorization, and accountability for every tenant |
 | P0 | C03 — Verified review integrity | Core workflow implemented | Durable proof, moderation, and publication integrity |
-| P0 | C04 — Provider ingestion and reconciliation | TicketPal upserts implemented | Reliable, replay-safe synchronisation at enterprise volume |
+| P0 | C04 — Provider ingestion and reconciliation | Signed, replay-safe TicketPal ingestion implemented | Reliable synchronisation and reconciliation at enterprise volume |
 | P1 | C05 — Invitation orchestration and delivery | Invitation creation implemented | Idempotent delivery and lifecycle management |
-| P1 | C06 — Moderation governance | Basic moderation implemented | Auditable, policy-led review operations |
+| P1 | C06 — Moderation governance | Policy-led, audited basic moderation implemented | Governed review operations and decision history |
 | P1 | C07 — Public review intelligence | Basic discovery and scores implemented | Scalable, explainable audience insight |
 | P2 | C08 — Organisation analytics and data access | Not implemented | Governed operational insight and exports |
 | P2 | C09 — Review distribution and widgets | Not implemented | Secure distribution of approved review evidence |
@@ -44,7 +44,7 @@ Operate Encore securely and predictably, with recoverable data, controlled relea
 
 **Domain Entities**
 
-No new business aggregate is required initially. Operational records may include deployment metadata, audit records, idempotency records, job failures, and integration health observations. Any retained operational record requires an explicit retention policy.
+No new business aggregate is required initially. Implemented operational records include administrative audit logs and provider integration events. Future records may include deployment metadata, job failures, and integration health observations. Each retained operational record requires an explicit retention policy.
 
 **API Contracts**
 
@@ -55,7 +55,7 @@ Current business APIs remain unchanged. Planned operational contracts include au
 - Validate all migrations against PostgreSQL in continuous integration.
 - Enforce missing uniqueness and lookup indexes identified by production query patterns.
 - Define backup, restore, retention, migration rollback, and disaster-recovery procedures.
-- Add persistence for audit or idempotency records only when their owning capability is designed.
+- Define cleanup and retention enforcement for audit and provider-event records.
 
 **Events**
 
@@ -104,7 +104,7 @@ Allow Encore to govern organisations, administrators, support access, and organi
 
 **Domain Entities**
 
-Implemented: `Organisation`, `User`, `Show`, and `Venue` ownership. Planned extensions may include role/permission definitions, provider credentials, and administrative audit records. `Organisation` remains the root ownership entity.
+Implemented: `Organisation`, `User`, `Show`, and `Venue` ownership, policy-led administrative authorization, and administrative audit records. Planned extensions may include role/permission definitions and provider credentials. `Organisation` remains the root ownership entity.
 
 **API Contracts**
 
@@ -114,7 +114,7 @@ Current administration uses session-authenticated web contracts. Any future orga
 
 - Constrain user roles and ownership invariants.
 - Preserve organisation foreign keys on every organisation-owned entity.
-- Add immutable audit records for organisation, user, role, activation, and ownership changes.
+- Strengthen immutable audit records with retention, database-role protection, and external tamper evidence.
 - Define deactivation, retention, export, and deletion semantics before self-service lifecycle work.
 
 **Events**
@@ -220,13 +220,13 @@ Implemented: provider identity fields on `Show` and `Performance`, plus organisa
 
 **API Contracts**
 
-Current TicketPal contracts are `POST /api/ticketpal/shows/upsert` and `POST /api/ticketpal/performances/upsert`. Planned evolution must provide versioning, provider-scoped authentication, idempotency/replay identifiers, consistent error envelopes, bounded batch semantics where required, and atomic conflict behavior.
+Current TicketPal contracts are `POST /api/ticketpal/shows/upsert`, `POST /api/ticketpal/performances/upsert`, and `POST /api/ticketpal/invitations`. They require signed event identity and provide synchronous duplicate-response replay. Planned evolution must provide versioning, provider-scoped credentials, consistent error envelopes, bounded batch semantics where required, and reconciliation behavior.
 
 **Database Impact**
 
 - Preserve unique provider identity keys for shows and performances.
 - Make concurrent upserts deterministic through database-authoritative conflict handling.
-- Persist delivery/idempotency state when asynchronous acknowledgement or replay protection is introduced.
+- Enforce cleanup and long-term retention policy for delivery/idempotency state.
 - Retain reconciliation checkpoints and failures according to an operational retention policy.
 
 **Events**
@@ -240,7 +240,7 @@ Request-critical validation may remain synchronous. Bulk ingestion, scheduled re
 **Security**
 
 - Replace the global secret with scoped, revocable, rotatable provider credentials.
-- Add signed timestamps or equivalent replay protection.
+- Replace the application-wide secret with provider-scoped, rotatable credentials while retaining signed timestamps and replay protection.
 - Apply provider-specific rate and payload limits.
 - Prevent a provider credential from assigning or mutating data outside its authorized organisation/integration scope.
 
@@ -276,7 +276,7 @@ Implemented: `ReviewInvitation`. Planned concepts may include an invitation idem
 
 **API Contracts**
 
-Current TicketPal contract: `POST /api/ticketpal/invitations`, which creates a new invitation on every successful request. The planned contract must define provider idempotency, eligibility evidence, channel-independent issuance, token-return policy, and safe replay responses.
+Current TicketPal contract: `POST /api/ticketpal/invitations`, which creates one invitation per unique signed provider event and safely replays the encrypted original response. Planned evolution must define eligibility evidence, channel-independent issuance, token-return policy, and long-term recovery after replay retention expires.
 
 **Database Impact**
 

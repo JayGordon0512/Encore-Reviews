@@ -16,6 +16,8 @@ erDiagram
 
 Organisation is the tenancy root. Review ownership is derived through `Review → Performance → Show → Organisation` rather than stored redundantly on the review.
 
+`IntegrationEvent` and `AuditLog` are operational evidence records, not business aggregates and not children in the Organisation ownership hierarchy. Their nullable organisation references provide context without redefining domain ownership.
+
 ## Entity reference
 
 ### Organisation
@@ -123,6 +125,16 @@ approved ↔ rejected
 ```
 
 The endpoint accepts approved or rejected regardless of current status, so re-moderation is possible. A moderation reason is optional.
+
+## Operational evidence records
+
+### IntegrationEvent
+
+Records one authenticated provider delivery and its processing lifecycle. Provider plus external event ID is unique. The record retains a payload hash, correlation ID, attempts, sanitized failure classification, and an encrypted response for bounded duplicate replay. It does not retain the raw provider payload and is not a domain-event stream. See [ADR-014](../02-ADR/ADR-014-provider-event-store.md).
+
+### AuditLog
+
+Records an administrative actor, organisation context, business action, target entity, allowlisted before/after state, request metadata, correlation ID, and time. Mutation audit entries commit with their administrative command. The model is append-only at the application layer. An audit log is evidence about an aggregate; it is not owned mutable state of that aggregate.
 
 ## Public aggregation rules
 

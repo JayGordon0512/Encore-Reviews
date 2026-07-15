@@ -9,7 +9,7 @@ flowchart LR
     Audience[Audience browser] --> Public[Public Blade routes]
     Customer[Organisation administrator] --> Admin[Session-authenticated admin routes]
     Encore[Encore super administrator] --> Admin
-    TicketPal[TicketPal integration] --> API[Shared-secret TicketPal API]
+    TicketPal[TicketPal integration] --> API[Signed TicketPal event API]
     Public --> App[Laravel application]
     Admin --> App
     API --> App
@@ -43,7 +43,7 @@ Public routes render the homepage, about page, show directory, show detail pages
 
 Authenticated, active users enter `/admin`. Customer administrators receive an organisation-scoped dashboard. They can approve or reject reviews belonging to performances of their organisation's shows.
 
-Tenant boundaries are applied through explicit query scoping and ownership checks in controllers; there is no global Eloquent tenant scope and no policy layer at present.
+Tenant boundaries are applied through Laravel Policies and explicit query scoping. There is no global Eloquent tenant scope or PostgreSQL row-level security.
 
 ### Encore administration
 
@@ -55,7 +55,7 @@ The support view renders organisation-scoped dashboard data in read-only mode. S
 
 The API has two trust models:
 
-- `/api/ticketpal/*` endpoints require the configured TicketPal shared secret.
+- `/api/ticketpal/*` endpoints require the configured TicketPal secret, fresh signed event headers, and provider event identity.
 - `/api/reviews` is public but requires a valid, unused, unexpired invitation token and, when the invitation has an email hash, the matching email address.
 
 The exact contracts are in [the API reference](../03-API/README.md).
@@ -67,23 +67,24 @@ The current code uses these layers:
 | Layer | Responsibility |
 | --- | --- |
 | Routes | URL registration and middleware composition |
-| Middleware | TicketPal secret validation, active-admin enforcement, and super-admin enforcement |
+| Middleware | TicketPal authentication/event replay protection, active-admin enforcement, and super-admin enforcement |
 | Form requests | Performance sync input validation |
 | Controllers | HTTP validation for most endpoints, orchestration, response construction, and view selection |
-| Services | Transactional performance synchronization business logic |
+| Services | Transactional performance synchronization and administrative audit logging |
 | Eloquent models | Relationships, fillable fields, casts, and UUID generation |
 | Blade views | Public, authentication, customer administration, and super-administration presentation |
 
-`PerformanceSyncService` is the only dedicated domain service currently present. Other workflows remain controller-led and should not be described as service-layer implementations.
+`PerformanceSyncService` contains performance synchronization rules, and `AuditLogger` records privileged commands. Other workflows remain controller-led and should not be described as service-layer implementations.
 
 ## Primary data flows
 
 ### Provider show synchronization
 
-1. TicketPal sends an authenticated show upsert.
-2. Encore finds the show by `ticketpal + provider_event_id` under a database transaction.
-3. Encore creates or updates the show and returns whether it was created.
-4. `organisation_id` is optional, so imported shows can remain unassigned until an Encore administrator assigns them.
+1. TicketPal sends an authenticated, signed show upsert with a unique provider event ID.
+2. Encore registers the delivery before business processing.
+3. Encore finds the show by `ticketpal + provider_event_id` under a database transaction.
+4. Encore creates or updates the show and returns whether it was created.
+5. `organisation_id` is optional, so imported shows can remain unassigned until an Encore administrator assigns them.
 
 ### Provider performance synchronization
 
@@ -109,6 +110,8 @@ The current code uses these layers:
 - Show upsert locks an existing matching show during mutation.
 - Performance synchronization locks the matching show and executes venue and performance resolution in one transaction.
 - Database uniqueness enforces provider show identity, provider performance identity, and organisation-scoped venue slugs.
+- Provider event uniqueness prevents duplicate controller processing and supports encrypted response replay.
+- Administrative mutations and their audit records commit atomically.
 
 ## Deployment shape
 

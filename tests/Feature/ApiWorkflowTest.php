@@ -8,11 +8,13 @@ use App\Models\ReviewInvitation;
 use App\Models\Show;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
+use Tests\Concerns\SignsTicketPalRequests;
 use Tests\TestCase;
 
 class ApiWorkflowTest extends TestCase
 {
     use RefreshDatabase;
+    use SignsTicketPalRequests;
 
     public function test_ticketpal_show_upsert_creates_and_updates_show(): void
     {
@@ -30,9 +32,7 @@ class ApiWorkflowTest extends TestCase
             'organisation_id' => $organisation->id,
         ];
 
-        $response = $this->withHeaders([
-            'X-TicketPal-Secret' => 'test-secret',
-        ])->postJson('/api/ticketpal/shows/upsert', $payload);
+        $response = $this->postTicketPalJson('/api/ticketpal/shows/upsert', $payload, 'show-create');
 
         $response->assertStatus(200)
             ->assertJson([
@@ -52,9 +52,11 @@ class ApiWorkflowTest extends TestCase
             'organisation_id' => $organisation->id,
         ]);
 
-        $response = $this->withHeaders([
-            'X-TicketPal-Secret' => 'test-secret',
-        ])->postJson('/api/ticketpal/shows/upsert', array_merge($payload, ['title' => 'Updated Title']));
+        $response = $this->postTicketPalJson(
+            '/api/ticketpal/shows/upsert',
+            array_merge($payload, ['title' => 'Updated Title']),
+            'show-update'
+        );
 
         $response->assertStatus(200)
             ->assertJson([
@@ -87,12 +89,10 @@ class ApiWorkflowTest extends TestCase
             'provider_performance_id' => 'perf-123',
         ]);
 
-        $invitationResponse = $this->withHeaders([
-            'X-TicketPal-Secret' => 'test-secret',
-        ])->postJson('/api/ticketpal/invitations', [
+        $invitationResponse = $this->postTicketPalJson('/api/ticketpal/invitations', [
             'performance_id' => $performance->id,
             'email' => 'reviewer@example.com',
-        ]);
+        ], 'invitation-create');
 
         $invitationResponse->assertStatus(201)
             ->assertJsonStructure([
@@ -168,12 +168,10 @@ class ApiWorkflowTest extends TestCase
             'status' => 'scheduled',
         ]);
 
-        $invitationResponse = $this->withHeaders([
-            'X-TicketPal-Secret' => 'test-secret',
-        ])->postJson('/api/ticketpal/invitations', [
+        $invitationResponse = $this->postTicketPalJson('/api/ticketpal/invitations', [
             'performance_id' => $performance->id,
             'email' => 'invited@example.com',
-        ]);
+        ], 'invitation-email-match');
 
         $token = $invitationResponse->json('invitation.token');
 

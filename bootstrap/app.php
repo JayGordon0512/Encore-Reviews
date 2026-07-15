@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsureActiveAdmin;
 use App\Http\Middleware\EnsureSuperAdmin;
+use App\Http\Middleware\VerifyTicketPalEvent;
 use App\Http\Middleware\VerifyTicketPalSecret;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -17,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'ticketpal.secret' => VerifyTicketPalSecret::class,
+            'ticketpal.event' => VerifyTicketPalEvent::class,
             'admin.active' => EnsureActiveAdmin::class,
             'super_admin' => EnsureSuperAdmin::class,
         ]);

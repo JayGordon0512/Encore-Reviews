@@ -8,11 +8,13 @@ use App\Models\Show;
 use App\Models\Venue;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
+use Tests\Concerns\SignsTicketPalRequests;
 use Tests\TestCase;
 
 class PerformanceSyncTest extends TestCase
 {
     use RefreshDatabase;
+    use SignsTicketPalRequests;
 
     protected function setUp(): void
     {
@@ -127,8 +129,7 @@ class PerformanceSyncTest extends TestCase
 
     private function syncPerformance(array $payload)
     {
-        return $this->withHeader('X-TicketPal-Secret', 'test-secret')
-            ->postJson('/api/ticketpal/performances/upsert', $payload);
+        return $this->postTicketPalJson('/api/ticketpal/performances/upsert', $payload);
     }
 
     private function createOrganisationShow(string $providerEventId): array

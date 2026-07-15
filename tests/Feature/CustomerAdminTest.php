@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\AuditLog;
 use App\Models\Organisation;
 use App\Models\Performance;
 use App\Models\Review;
@@ -99,6 +100,18 @@ class CustomerAdminTest extends TestCase
             'id' => $review->id,
             'moderation_status' => 'approved',
         ]);
+
+        $auditLog = AuditLog::where('action', 'review.moderated')->sole();
+        $this->assertSame($user->id, $auditLog->user_id);
+        $this->assertSame($user->organisation_id, $auditLog->organisation_id);
+        $this->assertSame([
+            'moderation_status' => 'pending',
+            'moderation_reason' => null,
+        ], $auditLog->before_state);
+        $this->assertSame([
+            'moderation_status' => 'approved',
+            'moderation_reason' => null,
+        ], $auditLog->after_state);
     }
 
     public function test_customer_cannot_moderate_another_organisations_review(): void

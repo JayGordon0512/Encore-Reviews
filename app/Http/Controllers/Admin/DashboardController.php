@@ -8,6 +8,7 @@ use App\Models\Review;
 use App\Models\Show;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -19,12 +20,15 @@ class DashboardController extends Controller
         }
 
         abort_unless($request->user()->organisation, 403, 'No organisation is assigned to this user.');
+        Gate::authorize('viewDashboard', $request->user()->organisation);
 
         return $this->forOrganisation($request->user()->organisation);
     }
 
     public function forOrganisation(Organisation $organisation, bool $supportMode = false): View
     {
+        Gate::authorize('viewDashboard', $organisation);
+
         $shows = Show::query()
             ->with(['reviews' => function ($query): void {
                 $query->where('moderation_status', 'approved');

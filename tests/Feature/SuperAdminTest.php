@@ -2,10 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Models\AuditLog;
 use App\Models\Organisation;
 use App\Models\Show;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use LogicException;
 use Tests\TestCase;
 
 class SuperAdminTest extends TestCase
@@ -59,6 +61,12 @@ class SuperAdminTest extends TestCase
             'role' => 'customer_admin',
             'is_active' => true,
         ]);
+
+        $logs = AuditLog::query()->orderBy('created_at')->get();
+        $this->assertCount(2, $logs);
+        $this->assertSame($logs[0]->correlation_id, $logs[1]->correlation_id);
+        $this->assertSame(['name', 'support_email', 'is_active', 'notes'], array_keys($logs[0]->after_state));
+        $this->assertArrayNotHasKey('password', $logs[1]->after_state);
     }
 
     public function test_super_admin_can_manage_users_and_assign_shows(): void
@@ -97,6 +105,47 @@ class SuperAdminTest extends TestCase
         $response->assertDontSee('Secret Second Show');
         $response->assertDontSee('>Approve<', false);
         $response->assertDontSee('>Reject<', false);
+        $this->assertDatabaseHas('audit_logs', [
+            'organisation_id' => $first->id,
+            'user_id' => $superAdmin->id,
+            'action' => 'organisation.support_viewed',
+        ]);
+    }
+
+    public function test_nested_resources_cannot_be_managed_through_another_organisation(): void
+    {
+        $superAdmin = User::factory()->superAdmin()->create();
+        $first = Organisation::create(['name' => 'First Organisation', 'is_active' => true]);
+        $second = Organisation::create(['name' => 'Second Organisation', 'is_active' => true]);
+        $secondUser = User::factory()->create(['organisation_id' => $second->id]);
+        $secondShow = $this->createShow('Second Organisation Show', $second);
+
+        $this->actingAs($superAdmin)->patch(route('super.organisations.users.update', [$first, $secondUser]), [
+            'name' => $secondUser->name,
+            'email' => $secondUser->email,
+            'is_active' => false,
+        ])->assertForbidden();
+
+        $this->actingAs($superAdmin)
+            ->delete(route('super.organisations.shows.destroy', [$first, $secondShow]))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('users', ['id' => $secondUser->id, 'is_active' => true]);
+        $this->assertDatabaseHas('shows', ['id' => $secondShow->id, 'organisation_id' => $second->id]);
+        $this->assertDatabaseCount('audit_logs', 0);
+    }
+
+    public function test_audit_logs_are_immutable_through_the_model(): void
+    {
+        $superAdmin = User::factory()->superAdmin()->create();
+        $organisation = Organisation::create(['name' => 'Audited Organisation', 'is_active' => true]);
+
+        $this->actingAs($superAdmin)->get(route('super.organisations.support', $organisation))->assertOk();
+
+        $auditLog = AuditLog::sole();
+
+        $this->expectException(LogicException::class);
+        $auditLog->update(['action' => 'tampered']);
     }
 
     private function createShow(string $title, ?Organisation $organisation = null): Show

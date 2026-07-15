@@ -1,6 +1,12 @@
 # Encore Reviews
 
-Encore Reviews is a Laravel-based audience review platform for live events, powered by TicketPal ticket data.
+Encore Reviews is an independent Laravel-based audience review platform for live events. TicketPal is one supported provider integration.
+
+## Engineering handbook
+
+The authoritative system, domain, API, security, operations, decision, and roadmap documentation is in the [Encore Reviews Engineering Handbook](docs/README.md).
+
+All pull requests must follow [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## What’s included
 
@@ -8,6 +14,7 @@ Encore Reviews is a Laravel-based audience review platform for live events, powe
 - Frontend using Vite and Tailwind-friendly CSS
 - TicketPal integrations:
   - `POST /api/ticketpal/shows/upsert`
+  - `POST /api/ticketpal/performances/upsert`
   - `POST /api/ticketpal/invitations`
 - Review submission endpoint:
   - `POST /api/reviews`
@@ -18,6 +25,8 @@ Encore Reviews is a Laravel-based audience review platform for live events, powe
   - `/review/submit` review submission form
 - UUID-based schema for shows, performances, venues, reviewers, reviews, and invitations
 - Feature tests covering key API and public page functionality
+- Organisation-scoped customer dashboard with review moderation
+- Encore super-admin area for organisations, users, show ownership, and support views
 
 ## Quick start
 
@@ -53,6 +62,12 @@ Run migrations:
 php artisan migrate
 ```
 
+Create the first Encore administrator (the password is requested securely):
+
+```bash
+php artisan encore:create-super-admin admin@example.com --name="Encore Admin"
+```
+
 Build assets:
 
 ```bash
@@ -81,10 +96,15 @@ php artisan test
 - The homepage, show listing, show detail, and review submission views are already wired
 - The TicketPal secret is configured via `ENCORE_TICKETPAL_SECRET`
 
+## Administration
+
+- Customers sign in at `/login` and only see shows and reviews owned by their organisation.
+- Encore super admins are redirected to `/admin/encore/accounts` after login.
+- Super admins can activate/deactivate organisations and users, assign imported shows, and open a read-only organisation support view.
+- TicketPal show upserts accept an optional `organisation_id`; unassigned shows can also be assigned in the Encore admin area.
+
 ## Next steps
 
-- Add organiser / admin dashboard
-- Add review moderation actions
 - Wire TicketPal event sync into performance/invitation creation
 - Add search/filter for public shows
 

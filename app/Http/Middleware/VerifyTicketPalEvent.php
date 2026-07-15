@@ -5,7 +5,6 @@ namespace App\Http\Middleware;
 use App\Models\IntegrationEvent;
 use Closure;
 use Illuminate\Contracts\Encryption\DecryptException;
-use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
@@ -113,23 +112,21 @@ class VerifyTicketPalEvent
         string $externalEventId,
         string $payloadHash
     ): array {
-        try {
-            $event = IntegrationEvent::create([
-                'provider' => self::PROVIDER,
-                'event_type' => $eventType,
-                'external_event_id' => $externalEventId,
-                'payload_hash' => $payloadHash,
-                'received_at' => now(),
-                'status' => 'processing',
-                'attempts' => 1,
-                'correlation_id' => (string) Str::uuid(),
-            ]);
+        $eventId = (string) Str::uuid();
+        $inserted = IntegrationEvent::query()->insertOrIgnore([
+            'id' => $eventId,
+            'provider' => self::PROVIDER,
+            'event_type' => $eventType,
+            'external_event_id' => $externalEventId,
+            'payload_hash' => $payloadHash,
+            'received_at' => now(),
+            'status' => 'processing',
+            'attempts' => 1,
+            'correlation_id' => (string) Str::uuid(),
+        ]);
 
-            return [$event, true, null];
-        } catch (QueryException $exception) {
-            if (! in_array((string) $exception->getCode(), ['23000', '23505'], true)) {
-                throw $exception;
-            }
+        if ($inserted === 1) {
+            return [IntegrationEvent::query()->findOrFail($eventId), true, null];
         }
 
         return DB::transaction(function () use ($externalEventId, $payloadHash): array {

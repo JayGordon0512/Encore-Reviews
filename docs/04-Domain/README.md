@@ -18,6 +18,17 @@ Organisation is the tenancy root. Review ownership is derived through `Review â†
 
 `IntegrationEvent` and `AuditLog` are operational evidence records, not business aggregates and not children in the Organisation ownership hierarchy. Their nullable organisation references provide context without redefining domain ownership.
 
+## Identity and authority boundary
+
+The current domain separates identity from review authority:
+
+- administrative `User` identity grants access to organisation or Encore administration under policy authorization;
+- pseudonymized `Reviewer` identity associates reviews from the same normalized email hash but does not grant review permission;
+- `ReviewInvitation` supplies the single-use authority to submit a review for its `Performance`;
+- `Review` preserves the resulting performance relationship and verification state.
+
+The application does not currently implement audience accounts. A future audience account must not create a generic review permission or replace the invitation and performance provenance required by [ADR-015](../02-ADR/ADR-015-authority-through-verification.md).
+
 ## Entity reference
 
 ### Organisation

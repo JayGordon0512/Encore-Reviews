@@ -1,6 +1,17 @@
 # Vision and Product Boundaries
 
-The formal platform mandate and governing principles are defined in the [Encore Reviews Platform Charter](Encore-Platform-Charter.md).
+The strategic foundation of the Encore Platform is:
+
+1. [The Encore Platform Manifesto](The-Encore-Platform-Manifesto.md) — enduring purpose, mission, beliefs, and promise.
+2. [Platform Strategy](Platform-Strategy.md) — independent open-platform position, provider ecosystem, TicketPal native advantage, and commercial strategy.
+3. [Encore Product Blueprint](Encore-Product-Blueprint.md) — authoritative product principles, participants, capabilities, boundaries, and outcomes.
+4. [Audience Journey](Audience-Journey.md) — authoritative path from open discovery through verified contribution and optional membership.
+5. [Operating Principles](Operating-Principles.md) — leadership responsibilities, decision framework, and product/engineering guardrails.
+6. [Encore Reviews Platform Charter](Encore-Platform-Charter.md) — formal platform mandate and governing engineering boundaries.
+
+[ADR-000](../01-Architecture/ADR-000-Founding-Principles.md) records the founding ecosystem decision. [ADR-015](../02-ADR/ADR-015-authority-through-verification.md) records the permanent distinction between identity and contribution authority.
+
+The latest governance assessments are the [Authority Principle Product Guardian Review](Authority-Principle-Product-Guardian-Review.md), the separate [documentation inconsistencies](Authority-Principle-Documentation-Inconsistencies.md), the [Authority Principle Engineering Architecture Assessment](../01-Architecture/Authority-Principle-Engineering-Assessment.md), and the [Provider-Agnostic Architecture Assessment](../01-Architecture/Provider-Agnostic-Architecture-Assessment.md).
 
 ## Purpose
 

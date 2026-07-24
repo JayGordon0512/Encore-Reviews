@@ -1,0 +1,66 @@
+# Release Documentation
+
+Release records provide a durable account of what changed, which architecture is effective, how operators should deploy or recover, and which risks remain. They supplement Git history and do not replace executable tests, migrations, ADRs, API specifications, or operational runbooks.
+
+## Release record naming
+
+Create one Markdown file per release:
+
+```text
+docs/07-Releases/v<major>.<minor>.<patch>-<descriptive-name>.md
+```
+
+Use the released semantic version and a stable descriptive suffix. Do not rewrite published release records except to correct an explicit factual error; add a dated correction note when necessary.
+
+## Required sections
+
+Every future release record must contain:
+
+### Release Notes
+
+Summarize the release outcome, user/engineering value, scope, owners, effective date, and verification evidence.
+
+### Architecture Changes
+
+List new, superseded, accepted, or deprecated ADRs and explain whether the architectural baseline changed. State “None” when there is no architecture change.
+
+### Operational Changes
+
+Describe runtime, infrastructure, configuration, monitoring, backup, worker, secret, support, or incident-response changes.
+
+### Breaking Changes
+
+Identify incompatible API, integration, data, configuration, deployment, or behavior changes. Name affected consumers, coordination owner, activation window, deprecation path, and rollback constraints. State “None” explicitly when applicable.
+
+### Migration Notes
+
+Document schema/data migrations, compatibility phases, preconditions, commands, expected duration/locking, verification, rollback, and backup requirements. Never claim rollback safety without evidence.
+
+### Known Issues
+
+List unresolved defects, limitations, security risks, operational risks, workarounds, severity, owner, and follow-up reference.
+
+### Deployment Notes
+
+Define deployment order, configuration and secret prerequisites, health checks, smoke tests, monitoring window, go/no-go owner, and rollback procedure.
+
+## Release governance
+
+Before approval:
+
+1. Confirm significant initiatives have the Strategic Review, Engineering Review, and Founder Approval required by the [Operating Principles](../00-Vision/Operating-Principles.md).
+2. Confirm the release record matches code, schema, tests, API references, and operations documentation.
+3. Update the [Decision Register](../Decision-Register.md) and ADR index for decision-status changes.
+4. Update the Provider API Specification and migration programme for provider-contract changes.
+5. Verify every local documentation cross-reference.
+6. Identify documentation added, superseded, or intentionally retained for history.
+7. Record test, migration, dependency-audit, formatting, build, and deployment evidence actually obtained.
+8. Obtain architecture, security, operations, product, and provider approval where their boundaries are affected.
+
+A release record must distinguish implementation completion, deployment completion, and production validation. None may be inferred from another.
+
+## Release index
+
+| Release | Status | Purpose |
+| --- | --- | --- |
+| [v0.3.0 Enterprise Foundation](v0.3.0-Enterprise-Foundation.md) | Architectural baseline | Formally closes the Enterprise Foundation Programme and establishes the future-development baseline. |

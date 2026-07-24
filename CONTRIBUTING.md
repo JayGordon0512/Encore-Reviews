@@ -2,7 +2,7 @@
 
 This document defines the engineering standards for Encore Reviews. Every future pull request must conform to these requirements unless the pull request includes an approved architecture decision that changes them.
 
-The [Engineering Handbook](docs/README.md), [Platform Charter](docs/00-Vision/Encore-Platform-Charter.md), and [Architecture Decision Records](docs/02-ADR/README.md) are normative project references. Code and executable tests remain the final source of truth when a discrepancy is found; the documentation must then be corrected in the same change.
+The [Engineering Handbook](docs/README.md), [Operating Principles](docs/00-Vision/Operating-Principles.md), [Platform Charter](docs/00-Vision/Encore-Platform-Charter.md), and [Architecture Decision Records](docs/02-ADR/README.md) are normative project references. Code and executable tests remain the final source of truth when a discrepancy is found; the documentation must then be corrected in the same change.
 
 ## 1. Contribution principles
 
@@ -10,6 +10,7 @@ Every change must:
 
 - preserve Encore's provider-neutral domain language;
 - treat `Organisation` as the root ownership entity;
+- preserve the distinction between identity/access and verified contribution authority;
 - make authentication, authorization, and organisation scope explicit;
 - keep externally consumed API behavior intentional and documented;
 - put multi-step business workflows in focused services;
@@ -20,11 +21,15 @@ Every change must:
 
 Do not introduce functionality merely because supporting infrastructure or a reserved database field exists. Redis, queues, Mailpit, Meilisearch, trust-score fields, edit timestamps, and client hash fields do not represent implemented product behavior by themselves.
 
+Before implementation begins, every significant initiative must complete the Strategic Review, Engineering Review, and Founder Approval stages defined in the [Operating Principles](docs/00-Vision/Operating-Principles.md). Contributors must apply the Product Guardian questions and raise unclear alignment before proceeding.
+
+Before implementing a contribution capability, document what grants authority, how it is verified, its scope and lifecycle, and how provenance reaches downstream analytics or AI. Account ownership must not be used as a shortcut for verified authority. See [ADR-015](docs/02-ADR/ADR-015-authority-through-verification.md).
+
 ## 2. Development workflow
 
 1. Branch from the current `main` branch.
 2. Keep the branch focused on one coherent outcome.
-3. Review the relevant handbook sections and ADRs before implementation.
+3. Review the relevant vision, Operating Principles, handbook sections, and ADRs before implementation.
 4. Add or update tests with the implementation.
 5. Update documentation in the same pull request.
 6. Run the required quality gates.
@@ -359,6 +364,7 @@ Update the relevant documents when a pull request changes:
 | Authentication, authorization, tenancy, or sensitive data | Security and tenancy |
 | Durable architecture decision | New or superseding ADR |
 | API field, validation, response, error, or auth | API reference |
+| External provider contract or responsibility | Provider API Specification and Interface Control Document |
 | Entity, relationship, invariant, or lifecycle | Domain reference |
 | Setup, migration, worker, deployment, recovery, or troubleshooting | Operations |
 | Future capability or delivery status | Roadmap |
@@ -371,6 +377,8 @@ Rules:
 - Update relative links when files move.
 - Retain superseded ADRs for history rather than rewriting accepted decisions invisibly.
 - Record material breaking changes and migration requirements in the pull request.
+
+The Provider API Specification is the single source of truth for all external provider integrations. No changes to the integration contract may be implemented in code until the Provider API Specification has been updated and approved. Any architectural change affecting provider integrations must also be recorded in an Architecture Decision Record (ADR) before implementation.
 
 ## 16. Required quality gates
 

@@ -1,5 +1,12 @@
 # System Architecture
 
+Architecture decisions are governed by the [Operating Principles](../00-Vision/Operating-Principles.md) and the founding ecosystem decision in [ADR-000](ADR-000-Founding-Principles.md). Significant initiatives require Strategic Review, Engineering Review, and Founder Approval before implementation proceeds.
+
+Current strategic architecture assessments:
+
+- [Authority Principle Engineering Architecture Assessment](Authority-Principle-Engineering-Assessment.md)
+- [Provider-Agnostic Architecture Assessment](Provider-Agnostic-Architecture-Assessment.md)
+
 ## Architecture summary
 
 Encore Reviews is a server-rendered Laravel 12 monolith. It exposes public Blade pages, authenticated administration pages, and JSON endpoints from one application and one relational database.

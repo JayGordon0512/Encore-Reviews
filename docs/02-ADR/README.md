@@ -2,8 +2,13 @@
 
 Architecture decision records describe consequential decisions visible in the current implementation. These records are retrospective where the code predates the handbook.
 
+The consolidated status and ownership view is maintained in the [Architecture Decision Register](../Decision-Register.md).
+
+[ADR-000 — Founding Principles](../01-Architecture/ADR-000-Founding-Principles.md) records the governance decision that every feature must strengthen the ecosystem, not simply an individual product. It is retained with the strategic architecture foundation at the path established by the operating model.
+
 | ADR | Decision | Status |
 | --- | --- | --- |
+| [ADR-000](../01-Architecture/ADR-000-Founding-Principles.md) | Every feature must strengthen the ecosystem, not simply an individual product | Accepted |
 | [ADR-001](ADR-001-organisation-is-the-root-domain.md) | Organisation is the root domain | Accepted |
 | [ADR-002](ADR-002-uuid-primary-keys.md) | UUID primary keys | Accepted |
 | [ADR-003](ADR-003-postgresql-selected-for-encore.md) | PostgreSQL selected for Encore | Accepted |
@@ -18,6 +23,7 @@ Architecture decision records describe consequential decisions visible in the cu
 | [ADR-012](ADR-012-transactional-administrative-audit-logging.md) | Transactional administrative audit logging | Accepted |
 | [ADR-013](ADR-013-policy-led-tenant-authorisation.md) | Policy-led tenant authorisation | Accepted |
 | [ADR-014](ADR-014-provider-event-store.md) | Provider event store | Accepted |
+| [ADR-015](ADR-015-authority-through-verification.md) | Authority through verification | Accepted |
 
 ## ADR lifecycle
 

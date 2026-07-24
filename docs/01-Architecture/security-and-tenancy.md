@@ -11,6 +11,12 @@ Encore has three caller classes:
 | Encore super administrator | Laravel session | Active user and `super_admin` role |
 | TicketPal integration | Shared secret plus signed event headers | `/api/ticketpal/*` route group and provider event identity |
 
+## Identity, access, and contribution authority
+
+Authentication establishes identity. Policies and tenant scope establish administrative access. Neither grants audience review authority.
+
+Public review submission requires a valid, unused, unexpired invitation token and, when applicable, the matching email. The invitation is the bounded authority evidence for one performance-level contribution. A future audience account must preserve this separation under [ADR-015](../02-ADR/ADR-015-authority-through-verification.md).
+
 ## TicketPal authentication
 
 TicketPal routes require `X-TicketPal-Secret` plus an event ID, fresh Unix timestamp, and HMAC-SHA256 signature over the timestamp, event ID, and raw body. Secrets and signatures are compared in constant time. Missing configuration, a missing header, an old timestamp, or a mismatch returns HTTP 401 with:

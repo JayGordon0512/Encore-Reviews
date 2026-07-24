@@ -1,5 +1,17 @@
 # HTTP API Reference
 
+## Provider documentation hierarchy
+
+| Document | Authority |
+| --- | --- |
+| [Provider API Specification v2](Provider-API-Specification-v2.md) | Single provider-integration contract authority; v2 target remains Proposed |
+| This HTTP API Reference | Executable current-state route and payload reference |
+| [Interface Control Document](Interface-Control-Document.md) | Formal sender/receiver responsibilities and provider agreement template |
+| [TicketPal Implementation Checklist](TicketPal-Implementation-Checklist.md) | TicketPal engineering delivery and production-readiness checklist |
+| [End-to-End Integration Test Plan](../05-Operations/End-to-End-Integration-Test-Plan.md) | Joint verification and evidence standard |
+
+Where proposed v2 behavior differs from this reference, current code follows this reference until v2 is approved, implemented, tested, and activated.
+
 ## Scope and conventions
 
 This document describes the JSON API implemented under `/api`. There is no API version prefix and no generated OpenAPI specification in the current repository.
@@ -221,7 +233,7 @@ HTTP 201:
 POST /api/reviews
 ```
 
-This endpoint does not use the TicketPal secret. The invitation token and matching email are the authorization evidence.
+This endpoint does not use the TicketPal secret and does not require an Encore account. The invitation token is the contribution-authority evidence; the matching email, where required, validates the invitation's intended identity. Identity alone is insufficient under [ADR-015](../02-ADR/ADR-015-authority-through-verification.md).
 
 ### Request fields
 

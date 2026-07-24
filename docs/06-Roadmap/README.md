@@ -8,16 +8,25 @@
 
 This roadmap plans Encore Reviews as a set of durable business and platform capabilities. It does not plan screens or isolated features. A user interface, API endpoint, background job, report, or provider adapter is a delivery mechanism within a capability, not a roadmap unit by itself.
 
+Roadmap decisions are governed by the [Operating Principles](../00-Vision/Operating-Principles.md). Every significant roadmap initiative must complete Strategic Review, Engineering Review, and Founder Approval before implementation proceeds, and must answer the Product Guardian questions before it is promoted into delivery.
+
+The proposed TicketPal transition to Provider API v2 is governed by the [TicketPal Provider v2 Migration Programme](TicketPal-Provider-v2-Migration.md). It does not add Performance Completed or Ticket Scanned to the implemented capability baseline.
+
+[Sprint 1 Enterprise Integration](Sprint-1-Enterprise-Integration.md) is a planning-only set of capability placeholders. It does not authorize implementation or supersede the capability portfolio below.
+
+[Engineering Governance Closure](Engineering-Governance-Closure.md) is **Deferred**. Current priority has shifted to **Encore Product Design** and the **Showcase Release**; no implementation or GitHub issue is authorized by that backlog record.
+
 The roadmap distinguishes implemented behavior from proposed work. A proposed API, event, queue, entity, or database change is not part of the current platform contract until it has been designed, implemented, tested, documented, and released.
 
 ## Planning principles
 
 1. Protect trust, tenant isolation, and recoverability before increasing product breadth.
 2. Extend Encore's provider-neutral domain rather than introducing provider terminology into core ownership.
-3. Deliver end-to-end capability increments, including security, operations, tests, and documentation.
-4. Use synchronous processing for request-critical state changes and queues for independently retryable work after ADR-007 and ADR-008 are accepted.
-5. Treat API and event payloads as governed contracts with explicit compatibility rules.
-6. Validate scalability through measured demand; do not introduce distributed infrastructure without an operational requirement.
+3. Preserve the distinction between identity/access and verified contribution authority under ADR-015.
+4. Deliver end-to-end capability increments, including security, operations, tests, and documentation.
+5. Use synchronous processing for request-critical state changes and queues for independently retryable work after ADR-007 and ADR-008 are accepted.
+6. Treat API and event payloads as governed contracts with explicit compatibility rules.
+7. Validate scalability through measured demand; do not introduce distributed infrastructure without an operational requirement.
 
 ## Portfolio priority
 
@@ -158,6 +167,8 @@ C01 platform assurance; agreed identity provider strategy; legal retention/delet
 
 Ensure every verified audience review is traceable to valid evidence for a specific performance, is submitted at most once per invitation, and is excluded from public output until approved.
 
+Identity alone does not grant review authority. A valid performance-level invitation supplies the bounded contribution authority under [ADR-015](../02-ADR/ADR-015-authority-through-verification.md).
+
 **Domain Entities**
 
 Implemented: `Performance`, `ReviewInvitation`, `Reviewer`, and `Review`. Planned integrity improvements include an explicit review-to-invitation relationship and versioned pseudonymous identity derivation.
@@ -269,6 +280,8 @@ C01 platform assurance; C02 organisation governance; accepted event/queue decisi
 **Business Goal**
 
 Issue the right review invitation once, deliver it through approved channels, and provide an observable lifecycle from eligibility to use or expiry.
+
+The invitation represents contribution authority, not account access. Future audience membership must not replace or broaden that authority implicitly.
 
 **Domain Entities**
 
@@ -589,6 +602,8 @@ C01 production operations; C02 integration ownership; C03 review evidence rules;
 - Contract changes follow documented versioning and deprecation rules.
 
 ## Capability delivery lifecycle
+
+Before entering delivery, a significant capability must complete the Operating Principles decision framework: Strategic Review, Engineering Review, and Founder Approval.
 
 Every capability increment moves through the following gates:
 

@@ -58,6 +58,12 @@ Providers supply event, performance, attendance, booking, or ticket context thro
 
 ## Trust principles
 
+### Identity and authority remain separate
+
+Identity establishes who a participant is and which membership or administrative capabilities they may access. It does not automatically authorize trusted audience contribution.
+
+Authority to submit a review derives from explicit verification and a valid review invitation for the relevant performance. See [ADR-015](../02-ADR/ADR-015-authority-through-verification.md).
+
 ### Performance-level verification
 
 Review invitations and reviews attach to a performance rather than only to a show. This connects eligibility to a specific occurrence, time, and potentially venue.

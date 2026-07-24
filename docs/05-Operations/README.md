@@ -1,5 +1,7 @@
 # Operations Runbook
 
+Provider integration verification is governed by the [End-to-End Integration Test Plan](End-to-End-Integration-Test-Plan.md). Sprint 0 evidence and remaining production risks are recorded in the [hardening report](sprint-0-hardening-report.md).
+
 ## Supported development topology
 
 The repository is configured for Laravel Sail and Docker Compose. The Compose application and PostgreSQL containers share the `sail` network.

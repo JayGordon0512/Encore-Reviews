@@ -1,7 +1,6 @@
 # ADR-017: Consented Eligibility and Encore-Owned Invitations
 
-Encore exists to orchestrate the live entertainment ecosystem through trusted
-experiences and collective intelligence.
+Encore exists to orchestrate the live entertainment ecosystem through trusted experiences and collective intelligence.
 
 This document contributes to that purpose.
 

@@ -1,7 +1,6 @@
 # ADR-016: Provider API v2 Credentials, Mappings, and Contract
 
-Encore exists to orchestrate the live entertainment ecosystem through trusted
-experiences and collective intelligence.
+Encore exists to orchestrate the live entertainment ecosystem through trusted experiences and collective intelligence.
 
 This document contributes to that purpose.
 

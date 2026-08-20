@@ -1,5 +1,9 @@
 # Encore Provider API v2 contract fixtures
 
+Encore exists to orchestrate the live entertainment ecosystem through trusted experiences and collective intelligence.
+
+This document contributes to that purpose.
+
 Status: Proposed shared baseline, 4 August 2026.
 
 These immutable fixtures define exact TicketPal request bytes and expected

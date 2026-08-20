@@ -1,5 +1,9 @@
 # ADR-012: Transactional Administrative Audit Logging
 
+Encore exists to orchestrate the live entertainment ecosystem through trusted experiences and collective intelligence.
+
+This document contributes to that purpose.
+
 - Status: Accepted
 - Date: 2026-07-15
 - Scope: Privileged administrative activity

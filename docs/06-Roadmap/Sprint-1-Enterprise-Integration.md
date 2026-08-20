@@ -1,5 +1,9 @@
 # Sprint 1: Enterprise Integration
 
+Encore exists to orchestrate the live entertainment ecosystem through trusted experiences and collective intelligence.
+
+This document contributes to that purpose.
+
 - Status: Planning only
 - Baseline dependency: v0.3.0 Enterprise Foundation
 - Implementation authority: None

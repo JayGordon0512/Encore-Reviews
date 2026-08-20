@@ -1,5 +1,9 @@
 # Security and Tenancy
 
+Encore exists to orchestrate the live entertainment ecosystem through trusted experiences and collective intelligence.
+
+This document contributes to that purpose.
+
 ## Security boundary summary
 
 Encore has three caller classes:

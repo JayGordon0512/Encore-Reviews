@@ -1,5 +1,9 @@
 # Capability Roadmap
 
+Encore exists to orchestrate the live entertainment ecosystem through trusted experiences and collective intelligence.
+
+This document contributes to that purpose.
+
 - Status: Authoritative planning reference
 - Owner: Encore Reviews product and engineering
 - Last updated: 15 July 2026

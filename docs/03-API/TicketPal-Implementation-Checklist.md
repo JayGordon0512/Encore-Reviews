@@ -1,5 +1,9 @@
 # TicketPal Signed Integration Implementation Checklist
 
+Encore exists to orchestrate the live entertainment ecosystem through trusted experiences and collective intelligence.
+
+This document contributes to that purpose.
+
 - Status: Delivery checklist for TicketPal Engineering
 - Applicable current contract: [Encore HTTP API Reference](README.md)
 - Proposed target context: [Provider API Specification v2](Provider-API-Specification-v2.md)

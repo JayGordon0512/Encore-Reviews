@@ -1,5 +1,9 @@
 # System Architecture
 
+Encore exists to orchestrate the live entertainment ecosystem through trusted experiences and collective intelligence.
+
+This document contributes to that purpose.
+
 Architecture decisions are governed by the [Operating Principles](../00-Vision/Operating-Principles.md) and the founding ecosystem decision in [ADR-000](ADR-000-Founding-Principles.md). Significant initiatives require Strategic Review, Engineering Review, and Founder Approval before implementation proceeds.
 
 Current strategic architecture assessments:

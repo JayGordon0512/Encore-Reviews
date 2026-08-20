@@ -1,5 +1,9 @@
 # Provider-Agnostic Architecture Assessment
 
+Encore exists to orchestrate the live entertainment ecosystem through trusted experiences and collective intelligence.
+
+This document contributes to that purpose.
+
 **Version:** 1.0
 
 **Date:** 24 July 2026

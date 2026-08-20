@@ -1,5 +1,9 @@
 # Encore Engineering Implementation Plan
 
+Encore exists to orchestrate the live entertainment ecosystem through trusted experiences and collective intelligence.
+
+This document contributes to that purpose.
+
 **Version:** 0.2
 
 **Date:** 24 July 2026

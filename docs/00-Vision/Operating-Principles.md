@@ -1,5 +1,9 @@
 # Operating Principles
 
+Encore exists to orchestrate the live entertainment ecosystem through trusted experiences and collective intelligence.
+
+This document contributes to that purpose.
+
 **Version:** 1.0
 
 **Status:** Strategic foundation
@@ -22,6 +26,8 @@
 - [Documentation First](#documentation-first)
 - [Engineering Principles](#engineering-principles)
 - [Product Guardian](#product-guardian)
+- [Engineering Guardian](#engineering-guardian)
+- [Related Strategic Foundation](#related-strategic-foundation)
 
 ## Purpose
 
@@ -30,6 +36,8 @@ These principles define how Encore is designed, built and evolved.
 They are intended to guide every strategic, product and engineering decision.
 
 Every contributor should understand these principles before proposing significant changes to the platform.
+
+They derive from [The Encore Constitution](../00-Constitution/CONSTITUTION.md) and the [Encore Core Purpose](CORE-PURPOSE.md). The Constitution is the highest governing authority; Purpose is the highest substantive authority.
 
 ## Our Leadership Model
 
@@ -190,20 +198,50 @@ Implementation quality is as important as feature delivery.
 
 ## Product Guardian
 
+Future Product Guardian reviews must validate:
+
+- alignment with Core Purpose;
+- alignment with the Constitution;
+- alignment with First Principles;
+- alignment with accepted ADRs;
+- alignment with approved Product Specifications.
+
 Before implementing any significant feature ask:
 
 - Does this strengthen trust?
+- Does this improve orchestration?
+- Does this benefit the ecosystem?
 - Does this improve discovery?
 - Does this generate meaningful audience intelligence?
+- Does this improve the audience experience?
 - Does this help someone make a better decision?
 - Does this support the Audience Journey?
+- Does this align with the Core Purpose?
+- Does this contribute to the change described by the Theory of Change?
 - Does this align with the Platform Manifesto?
 - Does contribution authority derive from explicit verification rather than identity alone?
 
 If the answer is unclear, raise the concern before implementation.
 
+Where a lower-level Product Specification or ADR appears to conflict with Purpose or the Constitution, raise the conflict rather than approving implementation.
+
+## Engineering Guardian
+
+Engineering reviews must additionally validate that:
+
+- architecture supports constitutional principles;
+- identity remains separate from authority;
+- trust is preserved;
+- platform neutrality is maintained;
+- future integrations strengthen orchestration rather than replacing ecosystem participants.
+
+Engineering must explain material trade-offs and challenge architecture or implementation choices that would allow a lower layer to redefine Product, Principles or Purpose.
+
 ## Related Strategic Foundation
 
+- [The Encore Constitution](../00-Constitution/CONSTITUTION.md)
+- [Encore Core Purpose](CORE-PURPOSE.md)
+- [Encore Theory of Change](THEORY-OF-CHANGE.md)
 - [The Encore Platform Manifesto](The-Encore-Platform-Manifesto.md)
 - [Encore Reviews Platform Charter](Encore-Platform-Charter.md)
 - [ADR-000: Founding Principles](../01-Architecture/ADR-000-Founding-Principles.md)

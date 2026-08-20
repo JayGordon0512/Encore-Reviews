@@ -1,5 +1,9 @@
 # Release Documentation
 
+Encore exists to orchestrate the live entertainment ecosystem through trusted experiences and collective intelligence.
+
+This document contributes to that purpose.
+
 Release records provide a durable account of what changed, which architecture is effective, how operators should deploy or recover, and which risks remain. They supplement Git history and do not replace executable tests, migrations, ADRs, API specifications, or operational runbooks.
 
 ## Release record naming

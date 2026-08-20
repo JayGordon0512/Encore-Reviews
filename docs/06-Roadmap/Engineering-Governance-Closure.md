@@ -1,5 +1,9 @@
 # Engineering Governance Closure
 
+Encore exists to orchestrate the live entertainment ecosystem through trusted experiences and collective intelligence.
+
+This document contributes to that purpose.
+
 - Status: **Deferred**
 - Programme type: Engineering governance and operational readiness
 - Scheduling status: Unscheduled

@@ -1,5 +1,9 @@
 # Operations Runbook
 
+Encore exists to orchestrate the live entertainment ecosystem through trusted experiences and collective intelligence.
+
+This document contributes to that purpose.
+
 Provider integration verification is governed by the [End-to-End Integration Test Plan](End-to-End-Integration-Test-Plan.md). Sprint 0 evidence and remaining production risks are recorded in the [hardening report](sprint-0-hardening-report.md).
 
 ## Supported development topology

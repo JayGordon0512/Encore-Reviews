@@ -1,5 +1,9 @@
 # Encore Platform Strategy
 
+Encore exists to orchestrate the live entertainment ecosystem through trusted experiences and collective intelligence.
+
+This document contributes to that purpose.
+
 **Version:** 1.0
 
 **Status:** Authoritative platform strategy
@@ -8,7 +12,7 @@
 
 ## Purpose
 
-This document defines Encore's position as an independent, open Audience Intelligence Platform for Live Entertainment and establishes the strategic relationship between Encore, TicketPal, third-party ticketing providers, organisations, and audiences.
+This document translates the [Encore Core Purpose](CORE-PURPOSE.md) into Encore's position as an independent, open Audience Intelligence Platform for Live Entertainment and establishes the strategic relationship between Encore, TicketPal, third-party ticketing providers, organisations, and audiences.
 
 It governs product and commercial direction. Technical implementation remains subject to architecture review and accepted Architecture Decision Records.
 
@@ -315,6 +319,9 @@ The platform strategy should be evaluated through:
 
 ## Related Strategic Foundation
 
+- [The Encore Constitution](../00-Constitution/CONSTITUTION.md)
+- [Encore Core Purpose](CORE-PURPOSE.md)
+- [Encore Theory of Change](THEORY-OF-CHANGE.md)
 - [The Encore Platform Manifesto](The-Encore-Platform-Manifesto.md)
 - [Encore Product Blueprint](Encore-Product-Blueprint.md)
 - [Audience Journey](Audience-Journey.md)

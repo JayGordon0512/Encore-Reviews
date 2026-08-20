@@ -1,5 +1,9 @@
 # ADR-007: Event-Driven Processing
 
+Encore exists to orchestrate the live entertainment ecosystem through trusted experiences and collective intelligence.
+
+This document contributes to that purpose.
+
 - Status: Proposed
 - Date: 2026-07-15
 - Scope: Cross-workflow reactions and integration side effects

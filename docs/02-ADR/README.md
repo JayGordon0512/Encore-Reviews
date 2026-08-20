@@ -1,5 +1,9 @@
 # Architecture Decision Records
 
+Encore exists to orchestrate the live entertainment ecosystem through trusted experiences and collective intelligence.
+
+This document contributes to that purpose.
+
 Architecture decision records describe consequential decisions visible in the current implementation. These records are retrospective where the code predates the handbook.
 
 The consolidated status and ownership view is maintained in the [Architecture Decision Register](../Decision-Register.md).

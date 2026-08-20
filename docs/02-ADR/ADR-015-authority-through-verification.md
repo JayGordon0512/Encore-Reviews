@@ -1,5 +1,9 @@
 # ADR-015: Authority Through Verification
 
+Encore exists to orchestrate the live entertainment ecosystem through trusted experiences and collective intelligence.
+
+This document contributes to that purpose.
+
 - Status: Accepted
 - Date: 2026-07-24
 - Scope: Identity, access, verified contribution, audience-generated content, and AI provenance
@@ -8,6 +12,8 @@
 ## Context
 
 Encore supports open public discovery, optional audience membership, and trusted audience contribution.
+
+The [Encore Constitution](../00-Constitution/CONSTITUTION.md) and [Core Purpose](../00-Vision/CORE-PURPOSE.md) establish trust as the basis of ecosystem orchestration and collective intelligence. The Trust Promise requires that only people who were there can contribute.
 
 Identity and authority answer different questions:
 
@@ -117,6 +123,9 @@ Changes affecting audience identity, account linking, review eligibility, contri
 
 ## Related Strategic Foundation
 
+- [The Encore Constitution](../00-Constitution/CONSTITUTION.md)
+- [Encore Core Purpose](../00-Vision/CORE-PURPOSE.md)
+- [Encore Theory of Change](../00-Vision/THEORY-OF-CHANGE.md)
 - [The Encore Platform Manifesto](../00-Vision/The-Encore-Platform-Manifesto.md)
 - [Encore Product Blueprint](../00-Vision/Encore-Product-Blueprint.md)
 - [Audience Journey](../00-Vision/Audience-Journey.md)

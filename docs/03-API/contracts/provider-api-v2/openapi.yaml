@@ -1,0 +1,413 @@
+openapi: 3.1.0
+info:
+  title: Encore Reviews Provider API
+  version: 2.0.0-proposed.1
+  description: >-
+    Proposed provider-neutral Release 1 contract for consented review eligibility
+    and withdrawal. TicketPal is the first provider. Acceptance records work for
+    asynchronous processing; Encore owns reviewer identity, invitation delivery,
+    reviews, moderation, publication and reputation.
+servers:
+  - url: https://encore.example/api/v2
+    description: Placeholder; each environment supplies its approved host.
+tags:
+  - name: Review eligibility
+
+paths:
+  /integrations/review-invitation-eligibilities:
+    post:
+      operationId: acceptReviewInvitationEligibilityV2
+      tags: [Review eligibility]
+      summary: Accept consented eligibility evidence
+      description: >-
+        Accepts evidence for one paid booking with current encore_review consent.
+        Encore resolves provider identifiers through credential-scoped mappings.
+        A 202 response does not mean an invitation has been issued or delivered.
+      security:
+        - ProviderHmac: []
+      parameters:
+        - $ref: '#/components/parameters/ProviderKeyId'
+        - $ref: '#/components/parameters/RequestTimestamp'
+        - $ref: '#/components/parameters/RequestNonce'
+        - $ref: '#/components/parameters/RequestSignature'
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EligibilityRequest'
+      responses:
+        '202':
+          description: New or duplicate-identical operation accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EligibilityAccepted'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorised'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/IdempotencyConflict'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/TemporarilyUnavailable'
+      x-encore-required-operation-scope: review-eligibility:write
+      x-encore-signature-canonicalization: |-
+        METHOD + "\n" + ABSOLUTE_PATH + "\n" + X-Request-Timestamp + "\n" +
+        X-Request-Nonce + "\n" + lowercase_hex(SHA256(raw_request_body))
+
+  /integrations/review-invitation-withdrawals:
+    post:
+      operationId: acceptReviewInvitationWithdrawalV2
+      tags: [Review eligibility]
+      summary: Accept withdrawal for the review purpose
+      description: >-
+        Records withdrawal idempotently and suppresses or revokes unredeemed
+        invitation activity. The response never reveals whether a target existed.
+      security:
+        - ProviderHmac: []
+      parameters:
+        - $ref: '#/components/parameters/ProviderKeyId'
+        - $ref: '#/components/parameters/RequestTimestamp'
+        - $ref: '#/components/parameters/RequestNonce'
+        - $ref: '#/components/parameters/RequestSignature'
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WithdrawalRequest'
+      responses:
+        '202':
+          description: New or duplicate-identical operation accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithdrawalAccepted'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorised'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/IdempotencyConflict'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/TemporarilyUnavailable'
+      x-encore-required-operation-scope: review-withdrawal:write
+      x-encore-signature-canonicalization: |-
+        METHOD + "\n" + ABSOLUTE_PATH + "\n" + X-Request-Timestamp + "\n" +
+        X-Request-Nonce + "\n" + lowercase_hex(SHA256(raw_request_body))
+
+components:
+  securitySchemes:
+    ProviderHmac:
+      type: apiKey
+      in: header
+      name: X-Provider-Key-Id
+      description: >-
+        Selects a scoped credential. Authentication also requires the timestamp,
+        nonce, signature, idempotency and correlation headers below.
+
+  parameters:
+    ProviderKeyId:
+      name: X-Provider-Key-Id
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 8
+        maxLength: 100
+    RequestTimestamp:
+      name: X-Request-Timestamp
+      in: header
+      required: true
+      description: RFC 3339 UTC timestamp checked against the approved freshness window.
+      schema:
+        type: string
+        format: date-time
+    RequestNonce:
+      name: X-Request-Nonce
+      in: header
+      required: true
+      description: UUID that is atomically single-use within the credential retention window.
+      schema:
+        type: string
+        format: uuid
+    RequestSignature:
+      name: X-Request-Signature
+      in: header
+      required: true
+      description: HMAC-SHA256 over the canonical input, formatted v1=lowercase_hex.
+      schema:
+        type: string
+        pattern: '^v1=[a-f0-9]{64}$'
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: Stable across intentional retries of the same business operation.
+      schema:
+        type: string
+        minLength: 16
+        maxLength: 200
+    CorrelationId:
+      name: X-Correlation-Id
+      in: header
+      required: true
+      description: Request-specific trace identifier returned in every response.
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    EligibilityRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - event_id
+        - schema_version
+        - occurred_at
+        - provider
+        - provider_booking_id
+        - provider_show_id
+        - provider_performance_id
+        - reviewer
+        - admission_quantity
+        - consent
+      properties:
+        event_id:
+          type: string
+          format: uuid
+        schema_version:
+          type: string
+          const: '2.0'
+        occurred_at:
+          type: string
+          format: date-time
+        provider:
+          type: string
+          const: ticketpal
+          description: Declarative only; it must match the authenticated credential.
+        provider_booking_id:
+          type: string
+          minLength: 1
+          maxLength: 100
+        provider_show_id:
+          type: string
+          minLength: 1
+          maxLength: 100
+        provider_performance_id:
+          type: string
+          minLength: 1
+          maxLength: 100
+        reviewer:
+          $ref: '#/components/schemas/Reviewer'
+        admission_quantity:
+          type: integer
+          minimum: 1
+          maximum: 100
+        consent:
+          $ref: '#/components/schemas/ConsentEvidence'
+
+    Reviewer:
+      type: object
+      additionalProperties: false
+      required: [name, email]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        email:
+          type: string
+          format: email
+          maxLength: 320
+
+    ConsentEvidence:
+      type: object
+      additionalProperties: false
+      required: [purpose, policy_version, captured_at]
+      properties:
+        purpose:
+          type: string
+          const: encore_review
+        policy_version:
+          type: string
+          minLength: 1
+          maxLength: 100
+        captured_at:
+          type: string
+          format: date-time
+
+    WithdrawalRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - event_id
+        - schema_version
+        - occurred_at
+        - provider
+        - provider_booking_id
+        - purpose
+        - withdrawn_at
+      properties:
+        event_id:
+          type: string
+          format: uuid
+        schema_version:
+          type: string
+          const: '2.0'
+        occurred_at:
+          type: string
+          format: date-time
+        provider:
+          type: string
+          const: ticketpal
+          description: Declarative only; it must match the authenticated credential.
+        provider_booking_id:
+          type: string
+          minLength: 1
+          maxLength: 100
+        original_eligibility_event_id:
+          type: [string, 'null']
+          format: uuid
+        purpose:
+          type: string
+          const: encore_review
+        withdrawn_at:
+          type: string
+          format: date-time
+
+    EligibilityAccepted:
+      type: object
+      additionalProperties: false
+      required: [status, event_id, eligibility_id, correlation_id]
+      properties:
+        status:
+          type: string
+          enum: [accepted, duplicate]
+        event_id:
+          type: string
+          format: uuid
+        eligibility_id:
+          type: string
+          format: uuid
+        correlation_id:
+          type: string
+          format: uuid
+
+    WithdrawalAccepted:
+      type: object
+      additionalProperties: false
+      required: [status, event_id, correlation_id]
+      properties:
+        status:
+          type: string
+          enum: [accepted, duplicate]
+        event_id:
+          type: string
+          format: uuid
+        correlation_id:
+          type: string
+          format: uuid
+
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      required: [error, message, correlation_id]
+      properties:
+        error:
+          type: string
+          enum:
+            - bad_request
+            - unauthorised
+            - forbidden
+            - idempotency_conflict
+            - validation_failed
+            - rate_limited
+            - temporarily_unavailable
+        message:
+          type: string
+        correlation_id:
+          type: string
+          format: uuid
+        details:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [field, code]
+            properties:
+              field:
+                type: string
+              code:
+                type: string
+
+  responses:
+    BadRequest:
+      description: Malformed request or missing required integration headers
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorised:
+      description: Unknown, revoked or expired credential; bad signature; stale timestamp; or replayed nonce
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: Authenticated credential lacks operation, account or organisation scope
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    IdempotencyConflict:
+      description: The scoped idempotency key was used with a different request digest
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    ValidationFailed:
+      description: Authenticated content is invalid or a required external mapping cannot resolve safely
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    RateLimited:
+      description: Credential or operation rate limit exceeded
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+            minimum: 1
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    TemporarilyUnavailable:
+      description: Retryable maintenance or dependency failure; no ambiguous domain outcome
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+            minimum: 1
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'

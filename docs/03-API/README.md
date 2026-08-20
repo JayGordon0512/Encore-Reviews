@@ -4,6 +4,7 @@
 
 | Document | Authority |
 | --- | --- |
+| [Provider API v2 OpenAPI candidate](contracts/provider-api-v2/openapi.yaml) | Machine-readable Release 1 contract candidate; Proposed and inactive |
 | [Provider API Specification v2](Provider-API-Specification-v2.md) | Single provider-integration contract authority; v2 target remains Proposed |
 | This HTTP API Reference | Executable current-state route and payload reference |
 | [Interface Control Document](Interface-Control-Document.md) | Formal sender/receiver responsibilities and provider agreement template |
@@ -14,7 +15,37 @@ Where proposed v2 behavior differs from this reference, current code follows thi
 
 ## Scope and conventions
 
-This document describes the JSON API implemented under `/api`. There is no API version prefix and no generated OpenAPI specification in the current repository.
+This document describes the JSON API currently implemented under `/api`. The
+repository also contains a proposed, machine-readable Provider API v2 contract
+and immutable fixtures. Their presence does not activate `/api/v2` routes or
+change production behaviour.
+
+The v2 candidate is protected by
+[`ProviderApiV2ContractFixtureTest`](../../tests/Unit/ProviderApiV2ContractFixtureTest.php)
+and the standalone fixture verifier. Contract approval, runtime implementation,
+database migration, operational acceptance and explicit activation remain
+separate release gates.
+
+### Provider API v2 implementation state
+
+The additive persistence foundation is present for scoped provider credentials,
+tenant-safe external mappings, nonce reservations, idempotency records and a
+minimised request journal. It stores secret references rather than plaintext
+secrets and stores request digests rather than raw request bodies.
+
+Both `ENCORE_PROVIDER_V2_INGRESS_ENABLED` and
+`ENCORE_PROVIDER_V2_INVITATION_ISSUING_ENABLED` default to `false`. No
+`/api/v2` request is reachable while ingress is disabled: the registered
+routes return HTTP 404 before authentication or domain work. Database and local
+contract-suite readiness must not be interpreted as contract approval or
+production activation.
+
+When enabled in an isolated environment, the implemented boundary verifies
+credential lifecycle, RFC 3339 freshness, path-bound HMAC, single-use nonce,
+operation scope and credential-scoped idempotency. Eligibility acceptance
+stores encrypted contact data, immutable consent evidence, one eligibility,
+one invitation schedule, audit evidence and a token-free transactional outbox
+message. Withdrawal is non-disclosing and cancels unissued activity.
 
 - Requests should use `Content-Type: application/json`.
 - Laravel validation failures return HTTP 422 with the standard `message` and `errors` object.

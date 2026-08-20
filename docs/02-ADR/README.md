@@ -24,6 +24,11 @@ The consolidated status and ownership view is maintained in the [Architecture De
 | [ADR-013](ADR-013-policy-led-tenant-authorisation.md) | Policy-led tenant authorisation | Accepted |
 | [ADR-014](ADR-014-provider-event-store.md) | Provider event store | Accepted |
 | [ADR-015](ADR-015-authority-through-verification.md) | Authority through verification | Accepted |
+| [ADR-016](ADR-016-provider-api-v2-credentials-mappings-and-contract.md) | Provider API v2 credentials, mappings and contract | Proposed |
+| [ADR-017](ADR-017-consented-eligibility-and-encore-owned-invitations.md) | Consented eligibility and Encore-owned invitations | Proposed |
+| [ADR-018](ADR-018-transactional-outbox-and-operated-background-workers.md) | Transactional outbox and operated background workers | Proposed |
+| [ADR-019](ADR-019-explicit-review-verification-moderation-and-publication.md) | Explicit review verification, moderation and publication | Proposed |
+| [ADR-020](ADR-020-encore-owned-versioned-reputation.md) | Encore-owned versioned reputation | Proposed |
 
 ## ADR lifecycle
 

@@ -1,0 +1,1 @@
+{"error":"validation_failed","message":"The request failed validation.","correlation_id":"99999999-9999-4999-8999-999999999999","details":[{"field":"admission_quantity","code":"minimum"}]}

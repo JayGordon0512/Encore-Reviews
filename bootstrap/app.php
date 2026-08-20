@@ -18,6 +18,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // DigitalOcean App Platform terminates TLS at its load balancer. Trust
+        // the forwarded scheme so Laravel generates HTTPS URLs and cookies.
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
             'ticketpal.secret' => VerifyTicketPalSecret::class,
             'ticketpal.event' => VerifyTicketPalEvent::class,

@@ -1,5 +1,9 @@
 # Architecture Decision Register
 
+Encore exists to orchestrate the live entertainment ecosystem through trusted experiences and collective intelligence.
+
+This document contributes to that purpose.
+
 - Register owner: Encore Reviews Engineering
 - Baseline: v0.3.0 Enterprise Foundation
 - Last reviewed: 16 July 2026

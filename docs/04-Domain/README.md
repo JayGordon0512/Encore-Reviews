@@ -1,5 +1,9 @@
 # Domain Model
 
+Encore exists to orchestrate the live entertainment ecosystem through trusted experiences and collective intelligence.
+
+This document contributes to that purpose.
+
 ## Aggregate overview
 
 ```mermaid

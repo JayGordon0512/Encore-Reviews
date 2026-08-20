@@ -1,5 +1,9 @@
 # Encore Audience Journey
 
+Encore exists to orchestrate the live entertainment ecosystem through trusted experiences and collective intelligence.
+
+This document contributes to that purpose.
+
 **Version:** 1.0
 
 **Status:** Authoritative product vision
@@ -8,7 +12,7 @@
 
 ## Purpose
 
-This document defines the intended audience relationship with Encore from open discovery through attendance, verified contribution, optional membership, personalisation, and repeat discovery.
+This document translates the [Encore Core Purpose](CORE-PURPOSE.md) into the intended audience relationship with Encore from open discovery through attendance, verified contribution, optional membership, personalisation, and repeat discovery.
 
 It protects one foundational rule:
 
@@ -419,6 +423,9 @@ Encore must not:
 
 ## Related Strategic Foundation
 
+- [The Encore Constitution](../00-Constitution/CONSTITUTION.md)
+- [Encore Core Purpose](CORE-PURPOSE.md)
+- [Encore Theory of Change](THEORY-OF-CHANGE.md)
 - [The Encore Platform Manifesto](The-Encore-Platform-Manifesto.md)
 - [Encore Product Blueprint](Encore-Product-Blueprint.md)
 - [Platform Strategy](Platform-Strategy.md)

@@ -1,17 +1,24 @@
 # Vision and Product Boundaries
 
-The strategic foundation of the Encore Platform is:
+Encore exists to orchestrate the live entertainment ecosystem through trusted experiences and collective intelligence.
 
-1. [The Encore Platform Manifesto](The-Encore-Platform-Manifesto.md) — enduring purpose, mission, beliefs, and promise.
-2. [Platform Strategy](Platform-Strategy.md) — independent open-platform position, provider ecosystem, TicketPal native advantage, and commercial strategy.
-3. [Encore Product Blueprint](Encore-Product-Blueprint.md) — authoritative product principles, participants, capabilities, boundaries, and outcomes.
-4. [Audience Journey](Audience-Journey.md) — authoritative path from open discovery through verified contribution and optional membership.
-5. [Operating Principles](Operating-Principles.md) — leadership responsibilities, decision framework, and product/engineering guardrails.
-6. [Encore Reviews Platform Charter](Encore-Platform-Charter.md) — formal platform mandate and governing engineering boundaries.
+This document contributes to that purpose.
+
+The constitutional and strategic foundation of the Encore Platform is hierarchical:
+
+1. [The Encore Constitution](../00-Constitution/CONSTITUTION.md) — highest governing authority within the repository.
+2. [Encore Core Purpose](CORE-PURPOSE.md) — constitutional Purpose and highest substantive authority.
+3. [Encore Theory of Change](THEORY-OF-CHANGE.md) — foundational explanation of how trusted experience and collective intelligence create ecosystem change.
+4. [The Encore Platform Manifesto](The-Encore-Platform-Manifesto.md) — enduring vision, mission, beliefs, and promise derived from Purpose.
+5. [Platform Strategy](Platform-Strategy.md) — independent open-platform position, provider ecosystem, TicketPal native advantage, and commercial strategy.
+6. [Encore Product Blueprint](Encore-Product-Blueprint.md) — authoritative product principles, participants, capabilities, boundaries, and outcomes.
+7. [Audience Journey](Audience-Journey.md) — authoritative path from open discovery through verified contribution and optional membership.
+8. [Operating Principles](Operating-Principles.md) — leadership responsibilities, decision framework, and Product/Engineering Guardian checks.
+9. [Encore Reviews Platform Charter](Encore-Platform-Charter.md) — formal current-platform mandate and governing engineering boundaries.
 
 [ADR-000](../01-Architecture/ADR-000-Founding-Principles.md) records the founding ecosystem decision. [ADR-015](../02-ADR/ADR-015-authority-through-verification.md) records the permanent distinction between identity and contribution authority.
 
-The latest governance assessments are the [Authority Principle Product Guardian Review](Authority-Principle-Product-Guardian-Review.md), the separate [documentation inconsistencies](Authority-Principle-Documentation-Inconsistencies.md), the [Authority Principle Engineering Architecture Assessment](../01-Architecture/Authority-Principle-Engineering-Assessment.md), and the [Provider-Agnostic Architecture Assessment](../01-Architecture/Provider-Agnostic-Architecture-Assessment.md).
+The latest governance assessments are the [Theory of Change Governance Summary](Theory-of-Change-Governance-Summary.md), the [Core Purpose Alignment Review](Core-Purpose-Alignment-Review.md), the [Authority Principle Product Guardian Review](Authority-Principle-Product-Guardian-Review.md), the separate [documentation inconsistencies](Authority-Principle-Documentation-Inconsistencies.md), the [Authority Principle Engineering Architecture Assessment](../01-Architecture/Authority-Principle-Engineering-Assessment.md), and the [Provider-Agnostic Architecture Assessment](../01-Architecture/Provider-Agnostic-Architecture-Assessment.md).
 
 ## Purpose
 

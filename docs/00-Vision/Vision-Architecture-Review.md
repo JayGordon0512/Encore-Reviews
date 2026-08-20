@@ -1,5 +1,9 @@
 # Encore Vision Architecture Review
 
+Encore exists to orchestrate the live entertainment ecosystem through trusted experiences and collective intelligence.
+
+This document contributes to that purpose.
+
 **Version:** 1.1
 
 **Review date:** 24 July 2026
@@ -119,7 +123,7 @@ The documents do not address jurisdiction, age assurance and children, accessibi
 
 ### Strategic-document authority could become ambiguous
 
-The Manifesto is the strategic north star, the Platform Strategy, Product Blueprint, and Audience Journey define product intent, the Charter and ADRs govern approved boundaries, and code and tests are executable truth for current behaviour. Governance must preserve this hierarchy when strategic intent, product policy, legal duty, architecture, and implementation point in different directions.
+The Constitution is the highest governing authority, and Core Purpose is the highest substantive authority. The Theory of Change explains the ecosystem transformation Encore exists to create. The Manifesto expresses the enduring vision and principles; the Platform Strategy, Product Blueprint, and Audience Journey define product intent; the Charter and ADRs govern approved boundaries; and code and tests are executable truth for current behaviour. Governance must preserve this hierarchy when strategic intent, product policy, legal duty, architecture, and implementation point in different directions.
 
 ## Recommendations
 
@@ -127,12 +131,15 @@ The Manifesto is the strategic north star, the Platform Strategy, Product Bluepr
 
 Define a simple hierarchy and change process:
 
-1. Manifesto: enduring purpose and principles.
-2. Product Blueprint: target capabilities, value exchanges, business boundaries, success measures, and sequencing.
-3. Audience Journey: user states, touchpoints, consent moments, trust expectations, and failure or recovery paths.
-4. Charter and policies: binding product, data, security, and operating constraints.
-5. Architecture and ADRs: technical realization of approved capabilities.
-6. Roadmap and releases: planned and delivered increments.
+1. Constitution: highest governing authority and interpretation of the constitutional layer.
+2. Core Purpose: highest substantive authority.
+3. Theory of Change: intended ecosystem transformation and stakeholder outcomes.
+4. Manifesto: enduring vision and principles derived from Purpose.
+5. Product Blueprint: target capabilities, value exchanges, business boundaries, success measures, and sequencing.
+6. Audience Journey: user states, touchpoints, consent moments, trust expectations, and failure or recovery paths.
+7. Charter and policies: binding product, data, security, and operating constraints.
+8. Architecture and ADRs: technical realization of approved capabilities.
+9. Roadmap and releases: planned and delivered increments.
 
 Each roadmap initiative should identify the vision outcome it advances, the policy constraints it invokes, and the evidence required to proceed.
 

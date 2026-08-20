@@ -1,6 +1,16 @@
 # The Encore Platform Manifesto
 
+Encore exists to orchestrate the live entertainment ecosystem through trusted experiences and collective intelligence.
+
+This document contributes to that purpose.
+
 **Version:** 1.0
+
+**Constitutional authority:** [The Encore Constitution](../00-Constitution/CONSTITUTION.md)
+
+**Constitutional basis:** [Encore Core Purpose](CORE-PURPOSE.md)
+
+**Change model:** [Encore Theory of Change](THEORY-OF-CHANGE.md)
 
 ## The Audience Intelligence Platform for Live Entertainment
 

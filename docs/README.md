@@ -1,8 +1,12 @@
 # Encore Reviews Engineering Handbook
 
+Encore exists to orchestrate the live entertainment ecosystem through trusted experiences and collective intelligence.
+
+This document contributes to that purpose.
+
 This directory is the authoritative engineering reference for Encore Reviews. It documents the system as implemented in the repository and separates current behavior from future direction.
 
-**Strategic foundation:** [The Encore Platform Manifesto](00-Vision/The-Encore-Platform-Manifesto.md), [Platform Strategy](00-Vision/Platform-Strategy.md), [Encore Product Blueprint](00-Vision/Encore-Product-Blueprint.md), and [Audience Journey](00-Vision/Audience-Journey.md) define the product vision. The [Operating Principles](00-Vision/Operating-Principles.md) define how strategic, product, and engineering decisions are made.
+**Constitutional foundation:** [The Encore Constitution](00-Constitution/CONSTITUTION.md) is the highest governing authority within the repository. [Encore Core Purpose](00-Vision/CORE-PURPOSE.md) is the highest substantive authority. The [Encore Theory of Change](00-Vision/THEORY-OF-CHANGE.md) explains how trusted experience and collective intelligence create ecosystem value. The [Manifesto](00-Vision/The-Encore-Platform-Manifesto.md), [Platform Strategy](00-Vision/Platform-Strategy.md), [Product Blueprint](00-Vision/Encore-Product-Blueprint.md), and [Audience Journey](00-Vision/Audience-Journey.md) translate Purpose into strategic and product direction. The [Operating Principles](00-Vision/Operating-Principles.md) define decision and Guardian governance.
 
 Last verified against the codebase: 16 July 2026.
 
@@ -10,12 +14,20 @@ Last verified against the codebase: 16 July 2026.
 
 | Area | Purpose |
 | --- | --- |
-| [The Encore Platform Manifesto](00-Vision/The-Encore-Platform-Manifesto.md) | Strategic north star for every product, architecture, roadmap, integration, and partnership decision |
+| [The Encore Constitution](00-Constitution/CONSTITUTION.md) | Highest governing authority for every business, product, architecture, ADR and engineering decision |
+| [Constitutional Governance Summary](00-Constitution/GOVERNANCE-SUMMARY.md) | Constitutional hierarchy, Guardian model, terminology decision and implementation boundary |
+| [Constitutional Repository Review](00-Constitution/REPOSITORY-REVIEW.md) | Cross-document alignment, inconsistencies and recommended amendments |
+| [Document Structure Recommendations](00-Constitution/DOCUMENT-STRUCTURE-RECOMMENDATIONS.md) | Non-disruptive proposal for future Constitution, Product, Architecture, ADR and Engineering layers |
+| [Encore Core Purpose](00-Vision/CORE-PURPOSE.md) | Constitutional Purpose and highest substantive authority for the platform |
+| [Encore Theory of Change](00-Vision/THEORY-OF-CHANGE.md) | Foundational model explaining why Encore deserves to exist and how the ecosystem benefits from trusted experience and collective intelligence |
+| [The Encore Platform Manifesto](00-Vision/The-Encore-Platform-Manifesto.md) | Enduring vision, mission, beliefs, and promise derived from the Core Purpose |
 | [Platform Strategy](00-Vision/Platform-Strategy.md) | Open-platform position, TicketPal native advantage, provider ecosystem, and commercial strategy |
 | [Encore Product Blueprint](00-Vision/Encore-Product-Blueprint.md) | Authoritative product principles, participant value, capability model, and product boundaries |
 | [Audience Journey](00-Vision/Audience-Journey.md) | Authoritative audience path from open discovery through verified contribution and optional membership |
 | [Operating Principles](00-Vision/Operating-Principles.md) | Leadership model, decision framework, product guardrails, and operating principles for every significant initiative |
-| [00 — Vision](00-Vision/README.md) | Product purpose, principles, scope, and terminology |
+| [Core Purpose Alignment Review](00-Vision/Core-Purpose-Alignment-Review.md) | Product Guardian confirmation, strategic alignment findings, and separately recorded recommendations |
+| [Theory of Change Governance Summary](00-Vision/Theory-of-Change-Governance-Summary.md) | Product Guardian alignment outcome, terminology decision, and recommendations for discussion |
+| [00 — Vision](00-Vision/README.md) | Strategic hierarchy, product principles, scope, and terminology |
 | [Platform Charter](00-Vision/Encore-Platform-Charter.md) | Governing platform mandate, trust principles, and engineering boundaries |
 | [01 — Architecture](01-Architecture/README.md) | Runtime design, components, data flow, and technical boundaries |
 | [ADR-000 — Founding Principles](01-Architecture/ADR-000-Founding-Principles.md) | Founding decision that every feature must strengthen the ecosystem, not simply an individual product |
@@ -63,13 +75,13 @@ The applicable domain, security, operations, roadmap, release, and API documenta
 ## Documentation policy
 
 - Engineering changes and pull requests must follow [CONTRIBUTING.md](../CONTRIBUTING.md).
-- Code and executable tests are the final source of truth when documentation and behavior disagree.
+- The Constitution is the highest governing authority and Purpose is the highest substantive authority; code and executable tests are the final source of truth for currently implemented behaviour. An inconsistency must be raised and resolved through the applicable governance process rather than allowing implementation to redefine Product or Purpose.
 - A behavior belongs in the current-state sections only when it exists in the application.
 - Proposed capabilities must remain in the roadmap until implementation, tests, and operational guidance exist.
 - Architecture decisions that materially change system boundaries should add or supersede an ADR.
 - API changes must update the API reference in the same change.
 - Schema or lifecycle changes must update the domain reference in the same change.
-- Product, architecture, and roadmap proposals should explain how they advance the Manifesto's mission and principles where applicable.
+- Product, architecture, and roadmap proposals should demonstrate alignment with the Core Purpose and Theory of Change and explain how they advance the Manifesto's mission and principles where applicable.
 - Significant initiatives must follow the leadership responsibilities, decision framework, and Product Guardian questions in the [Operating Principles](00-Vision/Operating-Principles.md).
 
 ### Provider integration governance

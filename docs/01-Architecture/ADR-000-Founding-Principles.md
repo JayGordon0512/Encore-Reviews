@@ -1,5 +1,9 @@
 # ADR-000: Founding Principles
 
+Encore exists to orchestrate the live entertainment ecosystem through trusted experiences and collective intelligence.
+
+This document contributes to that purpose.
+
 - Status: Accepted
 - Date: 2026-07-24
 - Scope: Product, engineering, integrations, and ecosystem governance

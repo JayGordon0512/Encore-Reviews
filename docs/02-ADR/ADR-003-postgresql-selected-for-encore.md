@@ -1,5 +1,9 @@
 # ADR-003: PostgreSQL Selected for Encore
 
+Encore exists to orchestrate the live entertainment ecosystem through trusted experiences and collective intelligence.
+
+This document contributes to that purpose.
+
 - Status: Accepted
 - Date: 2026-07-15
 - Scope: Persistent application data

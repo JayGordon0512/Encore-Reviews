@@ -1,8 +1,12 @@
 # Encore Reviews
 
+Encore exists to orchestrate the live entertainment ecosystem through trusted experiences and collective intelligence.
+
+This document contributes to that purpose.
+
 Encore Reviews is an independent Laravel-based audience review platform for live events. TicketPal is one supported provider integration.
 
-New contributors should begin with [The Encore Platform Manifesto](docs/00-Vision/The-Encore-Platform-Manifesto.md), the strategic north star for the platform, and the [Operating Principles](docs/00-Vision/Operating-Principles.md), which define how strategic, product, and engineering decisions are made.
+New contributors should begin with [The Encore Constitution](docs/00-Constitution/CONSTITUTION.md), the repository's highest governing authority, followed by the [Core Purpose](docs/00-Vision/CORE-PURPOSE.md), [Theory of Change](docs/00-Vision/THEORY-OF-CHANGE.md), [Manifesto](docs/00-Vision/The-Encore-Platform-Manifesto.md), and [Operating Principles](docs/00-Vision/Operating-Principles.md).
 
 ## Engineering handbook
 

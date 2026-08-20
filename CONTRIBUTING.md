@@ -1,13 +1,18 @@
 # Contributing to Encore Reviews
 
+Encore exists to orchestrate the live entertainment ecosystem through trusted experiences and collective intelligence.
+
+This document contributes to that purpose.
+
 This document defines the engineering standards for Encore Reviews. Every future pull request must conform to these requirements unless the pull request includes an approved architecture decision that changes them.
 
-The [Engineering Handbook](docs/README.md), [Operating Principles](docs/00-Vision/Operating-Principles.md), [Platform Charter](docs/00-Vision/Encore-Platform-Charter.md), and [Architecture Decision Records](docs/02-ADR/README.md) are normative project references. Code and executable tests remain the final source of truth when a discrepancy is found; the documentation must then be corrected in the same change.
+[The Encore Constitution](docs/00-Constitution/CONSTITUTION.md) is the repository's highest governing authority. The [Encore Core Purpose](docs/00-Vision/CORE-PURPOSE.md) is the highest substantive authority. The [Engineering Handbook](docs/README.md), [Operating Principles](docs/00-Vision/Operating-Principles.md), [Platform Charter](docs/00-Vision/Encore-Platform-Charter.md), and [Architecture Decision Records](docs/02-ADR/README.md) are normative downstream references. Code and executable tests remain the final source of truth for currently implemented behaviour. A discrepancy must be raised and resolved through the applicable governance process rather than allowing implementation to redefine Product or Purpose.
 
 ## 1. Contribution principles
 
 Every change must:
 
+- align with Encore's Core Purpose by strengthening trust, orchestration, ecosystem value, meaningful audience intelligence, or the audience experience;
 - preserve Encore's provider-neutral domain language;
 - treat `Organisation` as the root ownership entity;
 - preserve the distinction between identity/access and verified contribution authority;
@@ -21,7 +26,7 @@ Every change must:
 
 Do not introduce functionality merely because supporting infrastructure or a reserved database field exists. Redis, queues, Mailpit, Meilisearch, trust-score fields, edit timestamps, and client hash fields do not represent implemented product behavior by themselves.
 
-Before implementation begins, every significant initiative must complete the Strategic Review, Engineering Review, and Founder Approval stages defined in the [Operating Principles](docs/00-Vision/Operating-Principles.md). Contributors must apply the Product Guardian questions and raise unclear alignment before proceeding.
+Before implementation begins, every significant initiative must complete the Strategic Review, Engineering Review, and Founder Approval stages defined in the [Operating Principles](docs/00-Vision/Operating-Principles.md). Contributors must apply the Product Guardian questions, judge the proposal against the [Encore Theory of Change](docs/00-Vision/THEORY-OF-CHANGE.md), and raise unclear alignment before proceeding.
 
 Before implementing a contribution capability, document what grants authority, how it is verified, its scope and lifecycle, and how provenance reaches downstream analytics or AI. Account ownership must not be used as a shortcut for verified authority. See [ADR-015](docs/02-ADR/ADR-015-authority-through-verification.md).
 

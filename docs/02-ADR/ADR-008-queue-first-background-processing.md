@@ -1,5 +1,9 @@
 # ADR-008: Queue-First Background Processing
 
+Encore exists to orchestrate the live entertainment ecosystem through trusted experiences and collective intelligence.
+
+This document contributes to that purpose.
+
 - Status: Proposed
 - Date: 2026-07-15
 - Scope: Non-interactive and retryable workloads

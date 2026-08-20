@@ -1,5 +1,9 @@
 # Provider API Specification v2
 
+Encore exists to orchestrate the live entertainment ecosystem through trusted experiences and collective intelligence.
+
+This document contributes to that purpose.
+
 - Document status: Proposed target contract
 - Contract status: Not implemented and not approved for production use
 - Current production contract: [HTTP API Reference](README.md)

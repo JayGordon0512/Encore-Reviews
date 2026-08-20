@@ -1,5 +1,9 @@
 # End-to-End Provider Integration Test Plan
 
+Encore exists to orchestrate the live entertainment ecosystem through trusted experiences and collective intelligence.
+
+This document contributes to that purpose.
+
 - Status: Authoritative verification plan
 - Current executable scope: TicketPal show upsert, performance upsert, and review invitation
 - Proposed scope: Provider API v2, Performance Completed, and Ticket Scanned after approval/implementation

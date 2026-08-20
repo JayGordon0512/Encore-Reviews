@@ -1,5 +1,9 @@
 # Sprint 0 Enterprise Platform Hardening Report
 
+Encore exists to orchestrate the live entertainment ecosystem through trusted experiences and collective intelligence.
+
+This document contributes to that purpose.
+
 - Date: 15 July 2026
 - Branch: `feature/enterprise-foundation`
 - Scope: engineering-platform hardening only

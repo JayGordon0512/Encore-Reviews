@@ -1,5 +1,9 @@
 # Provider Interface Control Document
 
+Encore exists to orchestrate the live entertainment ecosystem through trusted experiences and collective intelligence.
+
+This document contributes to that purpose.
+
 - Document status: Draft integration agreement
 - Current interface: TicketPal-specific contract
 - Target interface: Proposed Provider API v2

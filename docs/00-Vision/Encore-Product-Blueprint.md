@@ -1,5 +1,9 @@
 # Encore Product Blueprint
 
+Encore exists to orchestrate the live entertainment ecosystem through trusted experiences and collective intelligence.
+
+This document contributes to that purpose.
+
 **Version:** 1.0
 
 **Status:** Authoritative product vision
@@ -8,7 +12,7 @@
 
 ## Purpose
 
-This blueprint defines the intended product shape of the Encore Platform. It translates [The Encore Platform Manifesto](The-Encore-Platform-Manifesto.md) into product principles, audiences, capabilities, boundaries, and outcomes.
+This blueprint defines the intended product shape of the Encore Platform. It translates the [Encore Core Purpose](CORE-PURPOSE.md) and [The Encore Platform Manifesto](The-Encore-Platform-Manifesto.md) into product principles, audiences, capabilities, boundaries, and outcomes.
 
 It describes the product Encore is becoming. It does not claim that every capability is currently implemented. Current implementation remains documented separately in the engineering handbook, roadmap, and release records.
 
@@ -441,6 +445,9 @@ The following strategic assumptions require evidence before becoming delivery co
 
 ## Related Strategic Foundation
 
+- [The Encore Constitution](../00-Constitution/CONSTITUTION.md)
+- [Encore Core Purpose](CORE-PURPOSE.md)
+- [Encore Theory of Change](THEORY-OF-CHANGE.md)
 - [The Encore Platform Manifesto](The-Encore-Platform-Manifesto.md)
 - [Audience Journey](Audience-Journey.md)
 - [Platform Strategy](Platform-Strategy.md)

@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Middleware\AuthenticateProviderV2Request;
 use App\Http\Middleware\EnsureActiveAdmin;
+use App\Http\Middleware\EnsureProviderV2Enabled;
 use App\Http\Middleware\EnsureSuperAdmin;
 use App\Http\Middleware\VerifyTicketPalEvent;
 use App\Http\Middleware\VerifyTicketPalSecret;
@@ -21,6 +23,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'ticketpal.event' => VerifyTicketPalEvent::class,
             'admin.active' => EnsureActiveAdmin::class,
             'super_admin' => EnsureSuperAdmin::class,
+            'provider.v2.enabled' => EnsureProviderV2Enabled::class,
+            'provider.v2.auth' => AuthenticateProviderV2Request::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

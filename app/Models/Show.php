@@ -25,6 +25,8 @@ class Show extends Model
         'genre',
         'primary_image_path',
         'status',
+        'lifecycle_status',
+        'reviews_locked',
         'ticket_url',
         'ticket_url_source',
         'ticket_url_last_synced_at',
@@ -35,6 +37,7 @@ class Show extends Model
 
     protected $casts = [
         'ticket_url_last_synced_at' => 'datetime',
+        'reviews_locked' => 'boolean',
     ];
 
     public function performances(): HasMany

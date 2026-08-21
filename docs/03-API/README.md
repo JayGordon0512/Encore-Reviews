@@ -9,6 +9,7 @@ This document contributes to that purpose.
 | Document | Authority |
 | --- | --- |
 | [Provider API v2 OpenAPI candidate](contracts/provider-api-v2/openapi.yaml) | Machine-readable Release 1 contract candidate; Proposed and inactive |
+| [Provider Catalogue Import API v2](Provider-Catalogue-Import-v2.md) | Implemented catalogue-import candidate; disabled by default |
 | [Provider API Specification v2](Provider-API-Specification-v2.md) | Single provider-integration contract authority; v2 target remains Proposed |
 | This HTTP API Reference | Executable current-state route and payload reference |
 | [Interface Control Document](Interface-Control-Document.md) | Formal sender/receiver responsibilities and provider agreement template |
@@ -43,6 +44,11 @@ Both `ENCORE_PROVIDER_V2_INGRESS_ENABLED` and
 routes return HTTP 404 before authentication or domain work. Database and local
 contract-suite readiness must not be interpreted as contract approval or
 production activation.
+
+The disabled v2 boundary also implements provider-neutral organisation,
+organisation-user membership, show and performance catalogue upserts. Their
+accepted payloads, lifecycle rules and reconciliation sequence are defined in
+the [Provider Catalogue Import API v2](Provider-Catalogue-Import-v2.md).
 
 When enabled in an isolated environment, the implemented boundary verifies
 credential lifecycle, RFC 3339 freshness, path-bound HMAC, single-use nonce,

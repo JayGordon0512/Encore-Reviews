@@ -5,6 +5,8 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -54,6 +56,19 @@ class User extends Authenticatable
     public function organisation(): BelongsTo
     {
         return $this->belongsTo(Organisation::class);
+    }
+
+    public function organisations(): BelongsToMany
+    {
+        return $this->belongsToMany(Organisation::class, 'organisation_user_memberships')
+            ->using(OrganisationUserMembership::class)
+            ->withPivot(['id', 'role', 'is_active'])
+            ->withTimestamps();
+    }
+
+    public function organisationMemberships(): HasMany
+    {
+        return $this->hasMany(OrganisationUserMembership::class);
     }
 
     public function isSuperAdmin(): bool

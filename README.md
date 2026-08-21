@@ -24,6 +24,11 @@ All pull requests must follow [CONTRIBUTING.md](CONTRIBUTING.md).
   - `POST /api/ticketpal/shows/upsert`
   - `POST /api/ticketpal/performances/upsert`
   - `POST /api/ticketpal/invitations`
+- Disabled-by-default Provider API v2 catalogue import:
+  - `POST /api/v2/integrations/catalogue/organisations`
+  - `POST /api/v2/integrations/catalogue/organisation-user-memberships`
+  - `POST /api/v2/integrations/catalogue/shows`
+  - `POST /api/v2/integrations/catalogue/performances`
 - Review submission endpoint:
   - `POST /api/reviews`
 - Public site pages:

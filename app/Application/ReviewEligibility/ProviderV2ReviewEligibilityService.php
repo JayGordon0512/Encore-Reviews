@@ -101,7 +101,10 @@ final class ProviderV2ReviewEligibilityService
             ReviewInvitationSchedule::create([
                 'eligibility_id' => $eligibility->id,
                 'scheduled_for' => $scheduleAt,
-                'status' => 'scheduled',
+                'status' => config('encore.provider_v2.invitation_issuing_enabled') ? 'scheduled' : 'suppressed',
+                'suppression_reason' => config('encore.provider_v2.invitation_issuing_enabled')
+                    ? null
+                    : 'invitation_issuing_disabled',
             ]);
             $this->outbox('ReviewEligibilityAccepted', 'ReviewEligibility', $eligibility->id,
                 $mapping->organisation_id, $authority, $correlationId, ['eligibility_id' => $eligibility->id]);
@@ -145,7 +148,7 @@ final class ProviderV2ReviewEligibilityService
             if ($eligibility) {
                 $eligibility->forceFill(['status' => 'withdrawn', 'withdrawn_at' => $payload['withdrawn_at']])->save();
                 ReviewInvitationSchedule::query()->where('eligibility_id', $eligibility->id)
-                    ->where('status', 'scheduled')
+                    ->whereIn('status', ['scheduled', 'suppressed'])
                     ->update(['status' => 'cancelled', 'suppression_reason' => 'consent_withdrawn', 'cancelled_at' => now()]);
             }
 

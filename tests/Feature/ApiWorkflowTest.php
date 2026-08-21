@@ -192,4 +192,45 @@ class ApiWorkflowTest extends TestCase
         $this->assertDatabaseCount('reviews', 0);
         $this->assertNull(ReviewInvitation::query()->where('performance_id', $performance->id)->first()->used_at);
     }
+
+    public function test_review_submission_is_closed_when_an_imported_historical_show_is_locked(): void
+    {
+        $show = Show::create([
+            'title' => 'Locked Historical Show',
+            'ticket_url' => 'https://tickets.example.com/locked-history',
+            'provider_source' => 'ticketpal',
+            'provider_event_id' => 'event-locked-history',
+            'status' => 'archived',
+            'lifecycle_status' => 'archived',
+            'reviews_locked' => true,
+            'slug' => 'locked-historical-show',
+        ]);
+        $performance = Performance::create([
+            'show_id' => $show->id,
+            'provider_source' => 'ticketpal',
+            'provider_event_id' => 'event-locked-history',
+            'provider_performance_id' => 'perf-locked-history',
+            'status' => 'completed',
+        ]);
+        $token = 'locked-history-token';
+        ReviewInvitation::create([
+            'performance_id' => $performance->id,
+            'email_hash' => hash('sha256', 'reviewer@example.com'),
+            'token_hash' => hash('sha256', $token),
+            'expires_at' => now()->addDay(),
+        ]);
+
+        $this->postJson('/api/reviews', [
+            'invitation_token' => $token,
+            'email' => 'reviewer@example.com',
+            'rating' => 5,
+            'would_recommend' => true,
+        ])->assertUnprocessable()->assertJson([
+            'ok' => false,
+            'message' => 'Reviews are closed for this historical show.',
+        ]);
+
+        $this->assertDatabaseCount('reviews', 0);
+        $this->assertNull(ReviewInvitation::query()->firstOrFail()->used_at);
+    }
 }

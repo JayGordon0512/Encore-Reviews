@@ -31,6 +31,7 @@ class ReviewController extends Controller
 
         $result = DB::transaction(function () use ($emailHash, $tokenHash, $validated): array {
             $invitation = ReviewInvitation::query()
+                ->with('performance.show')
                 ->where('token_hash', $tokenHash)
                 ->whereNull('used_at')
                 ->where(function ($query) {
@@ -46,6 +47,10 @@ class ReviewController extends Controller
 
             if ($invitation->email_hash !== null && ! hash_equals($invitation->email_hash, $emailHash)) {
                 return ['error' => 'email_mismatch'];
+            }
+
+            if ($invitation->performance?->show?->reviews_locked) {
+                return ['error' => 'reviews_locked'];
             }
 
             $reviewer = Reviewer::firstOrCreate(
@@ -83,6 +88,13 @@ class ReviewController extends Controller
             return response()->json([
                 'ok' => false,
                 'message' => 'Invitation token does not match this email address.',
+            ], 422);
+        }
+
+        if (($result['error'] ?? null) === 'reviews_locked') {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Reviews are closed for this historical show.',
             ], 422);
         }
 

@@ -9,7 +9,20 @@ return [
         'invitation_delay_hours' => (int) env('ENCORE_PROVIDER_V2_INVITATION_DELAY_HOURS', 2),
         'contact_fingerprint_key' => env('ENCORE_CONTACT_FINGERPRINT_KEY'),
         'contact_fingerprint_version' => (int) env('ENCORE_CONTACT_FINGERPRINT_VERSION', 1),
-        'secret_references' => [],
+        'catalogue_credentials' => [
+            'staging' => [
+                'key_id' => env('ENCORE_PROVIDER_V2_TICKETPAL_CATALOGUE_STAGING_KEY_ID'),
+                'secret_reference' => 'ticketpal-catalogue-staging',
+            ],
+            'production' => [
+                'key_id' => env('ENCORE_PROVIDER_V2_TICKETPAL_CATALOGUE_PRODUCTION_KEY_ID'),
+                'secret_reference' => 'ticketpal-catalogue-production',
+            ],
+        ],
+        'secret_references' => [
+            'ticketpal-catalogue-staging' => env('ENCORE_PROVIDER_V2_TICKETPAL_CATALOGUE_STAGING_SECRET'),
+            'ticketpal-catalogue-production' => env('ENCORE_PROVIDER_V2_TICKETPAL_CATALOGUE_PRODUCTION_SECRET'),
+        ],
     ],
 
     'ticketpal' => [

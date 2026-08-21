@@ -19,6 +19,24 @@ handover; they are not source-code constants:
 | Staging | To be supplied by Encore operations | Dedicated staging key ID and secret |
 | Production | To be supplied by Encore operations after reconciliation | Different production key ID and secret |
 
+Encore deployment configuration uses:
+
+- `ENCORE_PROVIDER_V2_TICKETPAL_CATALOGUE_STAGING_KEY_ID` and
+  `ENCORE_PROVIDER_V2_TICKETPAL_CATALOGUE_STAGING_SECRET`;
+- `ENCORE_PROVIDER_V2_TICKETPAL_CATALOGUE_PRODUCTION_KEY_ID` and
+  `ENCORE_PROVIDER_V2_TICKETPAL_CATALOGUE_PRODUCTION_SECRET`.
+
+After migrations and secret configuration, provision the database credential
+idempotently with:
+
+```text
+php artisan encore:provider-v2:provision-ticketpal-catalogue staging
+```
+
+The command stores only the configured secret reference. It refuses missing
+secrets, inactive providers, revoked credentials and key IDs owned by another
+provider. Production must use a different key ID and secret.
+
 All routes are unavailable while `ENCORE_PROVIDER_V2_INGRESS_ENABLED=false`.
 Keep `ENCORE_PROVIDER_V2_INVITATION_ISSUING_ENABLED=false` throughout the dry
 run, staging import and reconciliation. With issuing disabled, accepted review

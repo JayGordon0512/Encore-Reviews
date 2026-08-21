@@ -35,6 +35,7 @@ class ProviderV2ContractHttpTest extends TestCase
         $this->seedContractContext($credentialDocument['credentials']);
         config([
             'encore.provider_v2.ingress_enabled' => true,
+            'encore.provider_v2.invitation_issuing_enabled' => false,
             'encore.provider_v2.contact_fingerprint_key' => 'fixture-contact-fingerprint-key-do-not-use',
             'encore.provider_v2.secret_references' => collect($credentialDocument['credentials'])
                 ->mapWithKeys(fn (array $credential): array => [
@@ -62,6 +63,14 @@ class ProviderV2ContractHttpTest extends TestCase
             );
             $this->assertSame($expected, $response->json(), "Fixture {$case['id']} response changed");
             $response->assertHeader('X-Correlation-Id', $case['headers']['X-Correlation-Id']);
+
+            if ($case['id'] === 'eligibility.accepted') {
+                $this->assertDatabaseHas('review_invitation_schedules', [
+                    'eligibility_id' => '55555555-5555-4555-8555-555555555555',
+                    'status' => 'suppressed',
+                    'suppression_reason' => 'invitation_issuing_disabled',
+                ]);
+            }
         }
 
         $this->assertDatabaseCount('review_eligibilities', 1);

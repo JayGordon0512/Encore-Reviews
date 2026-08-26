@@ -26,4 +26,9 @@ class HomeController extends Controller
     {
         return view('public.about');
     }
+
+    public function organisers()
+    {
+        return view('public.organisers');
+    }
 }

@@ -17,6 +17,7 @@
 
     <nav class="er-nav" aria-label="Primary">
       <a class="er-nav__link" href="{{ route('shows.index') }}">Shows</a>
+      <a class="er-nav__link" href="{{ route('organisers') }}">For organisers</a>
       <a class="er-nav__link" href="{{ route('about') }}">About</a>
       @auth
         <a class="er-nav__link" href="{{ route('admin.dashboard') }}">Admin</a>
@@ -38,6 +39,7 @@
   <div class="er-mobileMenu" id="erMobileMenu" data-er-mobile-menu>
     <div class="er-container er-mobileMenu__inner">
       <a class="er-mobileMenu__link" href="{{ route('shows.index') }}">Shows</a>
+      <a class="er-mobileMenu__link" href="{{ route('organisers') }}">For organisers</a>
       <a class="er-mobileMenu__link" href="{{ route('about') }}">About</a>
       @auth
         <a class="er-mobileMenu__link" href="{{ route('admin.dashboard') }}">Admin</a>

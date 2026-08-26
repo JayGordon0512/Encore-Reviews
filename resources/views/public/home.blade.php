@@ -19,7 +19,7 @@
 
       <div class="er-hero__actions">
         <a class="er-btn" href="#featured-shows">Featured shows</a>
-        <a class="er-btn er-btn--ghost" href="{{ route('about') }}">About Encore</a>
+        <a class="er-btn er-btn--ghost" href="{{ route('organisers') }}">For organisers</a>
       </div>
     </div>
   </div>

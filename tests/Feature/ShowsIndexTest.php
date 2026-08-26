@@ -88,6 +88,26 @@ class ShowsIndexTest extends TestCase
         $response->assertSee('How it works');
     }
 
+    public function test_organiser_benefits_page_renders_sales_content(): void
+    {
+        $response = $this->get('/organisers');
+
+        $response->assertOk();
+        $response->assertSee('Turn real audience experience into lasting trust');
+        $response->assertSee('Reviews people can trust');
+        $response->assertSee('Clear ownership protects organisers and audiences');
+        $response->assertSee('Join the rollout');
+    }
+
+    public function test_public_navigation_links_to_the_organiser_benefits_page(): void
+    {
+        $response = $this->get('/');
+
+        $response->assertOk();
+        $response->assertSee('For organisers');
+        $response->assertSee(route('organisers'));
+    }
+
     private function createShow(): Show
     {
         return Show::create([

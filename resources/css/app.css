@@ -286,6 +286,167 @@ html{ scroll-padding-top: 82px; }
   color: var(--muted);
 }
 
+.er-organiserProof{
+  background: #0a2449;
+  color: #fff;
+  border-top: 1px solid rgba(255,255,255,0.12);
+}
+
+.er-organiserProof__grid{
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.er-organiserProof__grid p{
+  margin:0;
+  padding: 22px 28px;
+  display:grid;
+  gap: 3px;
+  border-left: 1px solid rgba(255,255,255,0.13);
+}
+
+.er-organiserProof__grid p:last-child{
+  border-right: 1px solid rgba(255,255,255,0.13);
+}
+
+.er-organiserProof__grid strong{
+  color: var(--gold);
+  font-size: 0.92rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.er-organiserProof__grid span{
+  color: rgba(255,255,255,0.84);
+  font-size: 0.94rem;
+}
+
+.er-benefitGrid{
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.er-benefitCard{
+  position:relative;
+  min-height: 210px;
+  padding-top: 54px;
+}
+
+.er-benefitCard__number{
+  position:absolute;
+  top: 19px;
+  left: 22px;
+  color: var(--gold);
+  font-size: 0.82rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+}
+
+.er-trustSplit{
+  display:grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: 44px;
+  align-items:center;
+}
+
+.er-trustSplit__cards{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.er-card--brand{
+  background: var(--brand);
+  border-color: var(--brand);
+  color: rgba(255,255,255,0.86);
+}
+
+.er-card--brand h3{
+  color:#fff;
+}
+
+.er-checkList{
+  margin: 16px 0 0;
+  padding:0;
+  list-style:none;
+  display:grid;
+  gap: 12px;
+}
+
+.er-checkList li{
+  position:relative;
+  padding-left: 24px;
+}
+
+.er-checkList li::before{
+  content:"\2713";
+  position:absolute;
+  left:0;
+  color: var(--gold);
+  font-weight: 900;
+}
+
+.er-stepGrid{
+  margin:0;
+  padding:0;
+  list-style:none;
+  display:grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.er-stepCard{
+  display:grid;
+  grid-template-columns: 48px 1fr;
+  gap: 16px;
+  align-items:start;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 22px;
+}
+
+.er-stepCard > span{
+  width: 44px;
+  height: 44px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background: var(--brand);
+  color:#fff;
+  font-weight:850;
+}
+
+.er-stepCard h3{
+  margin: 0 0 6px;
+  color: var(--ink);
+  font-size: 1.05rem;
+}
+
+.er-stepCard p{
+  margin:0;
+}
+
+.er-organiserCta{
+  background: var(--brand);
+  color: rgba(255,255,255,0.88);
+}
+
+.er-organiserCta__inner{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 36px;
+}
+
+.er-organiserCta .er-h2{
+  color:#fff;
+}
+
+.er-organiserCta p{
+  max-width: 700px;
+  margin-bottom:0;
+}
+
 .er-showCard{
   display:flex;
   flex-direction:column;
@@ -974,6 +1135,35 @@ textarea.er-input{
   .er-reviewShell,
   .er-formGrid{
     grid-template-columns: 1fr;
+  }
+
+  .er-organiserProof__grid,
+  .er-benefitGrid,
+  .er-trustSplit,
+  .er-trustSplit__cards,
+  .er-stepGrid{
+    grid-template-columns: 1fr;
+  }
+
+  .er-organiserProof__grid p{
+    border-left:0;
+    border-right:0;
+    border-bottom: 1px solid rgba(255,255,255,0.13);
+    padding: 18px 0;
+  }
+
+  .er-organiserProof__grid p:last-child{
+    border-right:0;
+    border-bottom:0;
+  }
+
+  .er-trustSplit{
+    gap: 24px;
+  }
+
+  .er-organiserCta__inner{
+    align-items:flex-start;
+    flex-direction:column;
   }
 
   .er-reviewAside{

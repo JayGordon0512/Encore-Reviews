@@ -5,6 +5,15 @@
 @endphp
 
 <article class="er-card er-showCard">
+  <a class="er-showCard__media" href="{{ route('shows.show', $show) }}" aria-label="View {{ $show->title }}">
+    <img
+      src="{{ asset($show->primary_image_path ?: 'assets/hero-show-bg.jpg') }}"
+      alt="{{ $show->title }} event artwork"
+      loading="lazy"
+      decoding="async"
+    >
+  </a>
+
   <div class="er-showCard__body">
     <h3>{{ $show->title }}</h3>
     <p>{{ $show->summary ?? (isset($show->description) ? substr($show->description, 0, 120) . (strlen($show->description) > 120 ? '…' : '') : 'No summary available.') }}</p>

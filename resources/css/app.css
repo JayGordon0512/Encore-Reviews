@@ -450,11 +450,33 @@ html{ scroll-padding-top: 82px; }
 .er-showCard{
   display:flex;
   flex-direction:column;
-  gap: 18px;
+  padding:0;
+  overflow:hidden;
+}
+
+.er-showCard__media{
+  display:block;
+  aspect-ratio: 16 / 9;
+  overflow:hidden;
+  background: var(--brand);
+  border-bottom: 1px solid var(--line);
+}
+
+.er-showCard__media img{
+  width:100%;
+  height:100%;
+  display:block;
+  object-fit:cover;
+  transition: transform 180ms ease;
+}
+
+.er-showCard__media:hover img{
+  transform: scale(1.025);
 }
 
 .er-showCard__body{
   flex:1;
+  padding: 22px 22px 0;
 }
 
 .er-showCard__footer{
@@ -463,6 +485,7 @@ html{ scroll-padding-top: 82px; }
   justify-content:space-between;
   gap: 14px;
   flex-wrap:wrap;
+  padding: 18px 22px 22px;
 }
 
 .er-cardScore{

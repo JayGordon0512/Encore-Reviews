@@ -35,6 +35,22 @@ class ShowsIndexTest extends TestCase
         $response->assertSee('View show');
     }
 
+    public function test_show_cards_render_the_ticketpal_event_image(): void
+    {
+        $show = $this->createShow();
+        $show->update([
+            'primary_image_path' => 'https://staging.ticketpal.co.uk/storage/35/conversions/event-display.jpg',
+        ]);
+
+        foreach (['/', '/shows'] as $path) {
+            $response = $this->get($path);
+
+            $response->assertOk();
+            $response->assertSee($show->primary_image_path, false);
+            $response->assertSee('Encore Sample Show event artwork');
+        }
+    }
+
     public function test_featured_show_cards_render_approved_review_score(): void
     {
         $show = $this->createShow();

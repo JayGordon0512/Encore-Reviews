@@ -124,6 +124,7 @@ class ProviderV2CatalogueImportTest extends TestCase
         $this->assertDatabaseCount('performances', 1);
         $this->assertDatabaseHas('shows', [
             'id' => $showId,
+            'primary_image_path' => 'https://ticketpal.example.test/images/show-100.jpg',
             'status' => 'archived',
             'lifecycle_status' => 'archived',
             'reviews_locked' => true,

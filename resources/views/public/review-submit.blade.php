@@ -13,7 +13,7 @@
 
     <div class="er-reviewShell">
       <form class="er-card er-reviewForm" id="reviewSubmissionForm">
-        @if($invitation?->performance?->show)
+        @if($invitation->performance?->show)
           <div class="er-reviewContext">
             <span class="er-reviewContext__label">You’re reviewing</span>
             <strong>{{ $invitation->performance->show->title }}</strong>
@@ -21,17 +21,9 @@
               <span>{{ $invitation->performance->starts_at->format('j M Y, g:ia') }}</span>
             @endif
           </div>
-        @else
-          <div class="er-reviewContext er-reviewContext--muted">
-            <span class="er-reviewContext__label">Review details</span>
-            <strong>Enter your invitation token to submit your verified review.</strong>
-          </div>
         @endif
 
-        <div class="er-field">
-          <label for="invitation_token">Invitation token</label>
-          <input class="er-input" type="text" id="invitation_token" name="invitation_token" value="{{ $invitationToken }}" autocomplete="off" required>
-        </div>
+        <input type="hidden" name="invitation_token" value="{{ $invitationToken }}">
 
         <div class="er-formGrid">
           <div class="er-field">

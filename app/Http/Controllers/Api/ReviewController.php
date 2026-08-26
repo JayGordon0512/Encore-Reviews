@@ -33,6 +33,7 @@ class ReviewController extends Controller
             $invitation = ReviewInvitation::query()
                 ->with('performance.show')
                 ->where('token_hash', $tokenHash)
+                ->whereNotNull('sent_at')
                 ->whereNull('used_at')
                 ->where(function ($query) {
                     $query->whereNull('expires_at')

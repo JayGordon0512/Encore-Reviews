@@ -217,6 +217,7 @@ class ApiWorkflowTest extends TestCase
             'performance_id' => $performance->id,
             'email_hash' => hash('sha256', 'reviewer@example.com'),
             'token_hash' => hash('sha256', $token),
+            'sent_at' => now(),
             'expires_at' => now()->addDay(),
         ]);
 

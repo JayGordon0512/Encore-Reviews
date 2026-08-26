@@ -15,8 +15,18 @@ class ReviewSubmissionController extends Controller
             ? ReviewInvitation::query()
                 ->with('performance.show')
                 ->where('token_hash', hash('sha256', $invitationToken))
+                ->whereNotNull('sent_at')
+                ->whereNull('used_at')
+                ->where(function ($query): void {
+                    $query->whereNull('expires_at')
+                        ->orWhere('expires_at', '>', now());
+                })
                 ->first()
             : null;
+
+        if ($invitation === null) {
+            return response()->view('public.review-invitation-unavailable', status: 404);
+        }
 
         return view('public.review-submit', [
             'invitationToken' => $invitationToken,

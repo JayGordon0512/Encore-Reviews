@@ -18,7 +18,6 @@
     <nav class="er-nav" aria-label="Primary">
       <a class="er-nav__link" href="{{ route('shows.index') }}">Shows</a>
       <a class="er-nav__link" href="{{ route('about') }}">About</a>
-      <a class="er-nav__link" href="{{ route('review.submit') }}">Submit review</a>
       @auth
         <a class="er-nav__link" href="{{ route('admin.dashboard') }}">Admin</a>
       @else
@@ -40,7 +39,6 @@
     <div class="er-container er-mobileMenu__inner">
       <a class="er-mobileMenu__link" href="{{ route('shows.index') }}">Shows</a>
       <a class="er-mobileMenu__link" href="{{ route('about') }}">About</a>
-      <a class="er-mobileMenu__link" href="{{ route('review.submit') }}">Submit review</a>
       @auth
         <a class="er-mobileMenu__link" href="{{ route('admin.dashboard') }}">Admin</a>
       @else

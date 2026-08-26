@@ -7,6 +7,7 @@ use App\Models\Review;
 use App\Models\Reviewer;
 use App\Models\Show;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class ShowsIndexTest extends TestCase
@@ -49,6 +50,58 @@ class ShowsIndexTest extends TestCase
             $response->assertSee($show->primary_image_path, false);
             $response->assertSee('Encore Sample Show event artwork');
         }
+    }
+
+    public function test_shows_can_be_searched_by_title_summary_or_genre(): void
+    {
+        $this->createShow([
+            'title' => 'Dear Evan Hansen',
+            'summary' => 'A contemporary musical.',
+            'genre' => 'Musical theatre',
+        ]);
+        $this->createShow([
+            'title' => 'The Comedy Hour',
+            'summary' => 'An evening of stand-up.',
+            'genre' => 'Comedy',
+        ]);
+
+        $response = $this->get('/shows?q=musical');
+
+        $response->assertOk();
+        $response->assertSee('Dear Evan Hansen');
+        $response->assertDontSee('The Comedy Hour');
+        $response->assertSee('1 show found');
+    }
+
+    public function test_shows_can_be_filtered_by_status_and_archived_shows_stay_hidden(): void
+    {
+        $this->createShow(['title' => 'Playing Tonight', 'status' => 'now_playing']);
+        $this->createShow(['title' => 'Opening Soon', 'status' => 'upcoming']);
+        $this->createShow(['title' => 'Closed Production', 'status' => 'archived']);
+
+        $response = $this->get('/shows?status=now_playing');
+
+        $response->assertOk();
+        $response->assertSee('Playing Tonight');
+        $response->assertDontSee('Opening Soon');
+        $response->assertDontSee('Closed Production');
+    }
+
+    public function test_show_results_are_paginated_and_keep_active_filters(): void
+    {
+        foreach (range(1, 13) as $number) {
+            $this->createShow([
+                'title' => sprintf('Musical %02d', $number),
+                'genre' => 'Musical',
+            ]);
+        }
+
+        $response = $this->get('/shows?q=musical');
+
+        $response->assertOk();
+        $response->assertSee('13 shows found');
+        $response->assertSee('Page 1 of 2');
+        $response->assertSee('/shows?q=musical&amp;page=2', false);
     }
 
     public function test_featured_show_cards_render_approved_review_score(): void
@@ -124,16 +177,18 @@ class ShowsIndexTest extends TestCase
         $response->assertSee(route('organisers'));
     }
 
-    private function createShow(): Show
+    private function createShow(array $attributes = []): Show
     {
-        return Show::create([
+        $identifier = Str::lower(Str::random(12));
+
+        return Show::create(array_merge([
             'title' => 'Encore Sample Show',
-            'slug' => 'encore-sample-show',
+            'slug' => 'encore-sample-show-'.$identifier,
             'summary' => 'A test show listing.',
             'ticket_url' => 'https://tickets.example.com/sample-show',
             'provider_source' => 'ticketpal',
-            'provider_event_id' => 'sample-event-1',
+            'provider_event_id' => 'sample-event-'.$identifier,
             'status' => 'upcoming',
-        ]);
+        ], $attributes));
     }
 }

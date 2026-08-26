@@ -1,7 +1,11 @@
 @php
-  $approvedReviews = $show->relationLoaded('reviews') ? $show->reviews : collect();
-  $reviewCount = $approvedReviews->count();
-  $averageRating = $reviewCount > 0 ? $approvedReviews->avg('rating') : null;
+  $approvedReviews = $show->relationLoaded('reviews') ? $show->reviews : null;
+  $reviewCount = isset($show->approved_reviews_count)
+    ? (int) $show->approved_reviews_count
+    : ($approvedReviews?->count() ?? 0);
+  $averageRating = isset($show->approved_reviews_avg_rating)
+    ? (float) $show->approved_reviews_avg_rating
+    : ($reviewCount > 0 ? $approvedReviews?->avg('rating') : null);
 @endphp
 
 <article class="er-card er-showCard">

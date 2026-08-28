@@ -6,6 +6,9 @@
 
   <title>@yield('title', 'Encore Reviews — Powered by TicketPal')</title>
   <meta name="description" content="@yield('meta_description', 'Audience reviews for live events — powered by TicketPal.')">
+  <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+  <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="16x16 32x32 48x48">
+  <link rel="apple-touch-icon" href="{{ asset('assets/encore-icon.png') }}">
   @yield('head')
   @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>

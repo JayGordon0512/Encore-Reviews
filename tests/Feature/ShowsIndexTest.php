@@ -171,6 +171,19 @@ class ShowsIndexTest extends TestCase
         $response->assertDontSee('>About<', false);
     }
 
+    public function test_public_pages_declare_the_encore_favicon(): void
+    {
+        $response = $this->get('/');
+
+        $response->assertOk();
+        $response->assertSee(asset('favicon.svg'), false);
+        $response->assertSee(asset('favicon.ico'), false);
+        $response->assertSee(asset('assets/encore-icon.png'), false);
+        $this->assertFileExists(public_path('favicon.svg'));
+        $this->assertFileExists(public_path('favicon.ico'));
+        $this->assertGreaterThan(0, filesize(public_path('favicon.ico')));
+    }
+
     private function createShow(array $attributes = []): Show
     {
         $identifier = Str::lower(Str::random(12));

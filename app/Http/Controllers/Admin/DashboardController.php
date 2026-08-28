@@ -30,6 +30,7 @@ class DashboardController extends Controller
         Gate::authorize('viewDashboard', $organisation);
 
         $shows = Show::query()
+            ->withCount(['performances', 'audienceAttendances'])
             ->with(['reviews' => function ($query): void {
                 $query->where('moderation_status', 'approved');
             }])

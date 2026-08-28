@@ -15,10 +15,13 @@
       @if($supportMode)
         <a class="er-btn er-btn--secondary" href="{{ route('super.organisations.edit', $organisation) }}">Back to organisation</a>
       @else
-        <form method="POST" action="{{ route('logout') }}">
-          @csrf
-          <button class="er-btn er-btn--secondary" type="submit">Log out</button>
-        </form>
+        <div class="er-adminActions">
+          <a class="er-btn" href="{{ route('admin.events.create') }}">Create event</a>
+          <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button class="er-btn er-btn--secondary" type="submit">Log out</button>
+          </form>
+        </div>
       @endif
     </div>
 
@@ -59,11 +62,16 @@
               <article class="er-adminListItem">
                 <div>
                   <h3>{{ $show->title }}</h3>
-                  <p>{{ strtoupper(str_replace('_', ' ', $show->status)) }}</p>
+                  <p>{{ strtoupper(str_replace('_', ' ', $show->status)) }} · {{ $show->performances_count }} date(s) · {{ $show->audience_attendances_count }} imported</p>
                 </div>
-                <div class="er-adminMetric">
-                  <strong>{{ $show->reviews->count() }}</strong>
-                  <span>approved</span>
+                <div class="er-adminActions">
+                  @if(!$supportMode && $show->provider_source === \App\Models\Show::SOURCE_MANUAL)
+                    <a class="er-btn er-btn--secondary er-btn--small" href="{{ route('admin.events.show', $show) }}">Manage</a>
+                  @endif
+                  <div class="er-adminMetric">
+                    <strong>{{ $show->reviews->count() }}</strong>
+                    <span>approved</span>
+                  </div>
                 </div>
               </article>
             @endforeach

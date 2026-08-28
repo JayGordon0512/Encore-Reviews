@@ -37,3 +37,35 @@ const openMenu = () => {
     if (window.innerWidth > 520) closeMenu();
   });
 });
+
+document.addEventListener("DOMContentLoaded", () => {
+  const editor = document.querySelector("[data-performance-editor]");
+  if (!editor) return;
+
+  const list = editor.querySelector("[data-performance-list]");
+  const template = editor.querySelector("[data-performance-template]");
+  const addButton = editor.querySelector("[data-add-performance]");
+  let nextIndex = list.querySelectorAll("[data-performance-row]").length;
+
+  const updateRemoveButtons = () => {
+    const rows = list.querySelectorAll("[data-performance-row]");
+    rows.forEach((row) => {
+      const removeButton = row.querySelector("[data-remove-performance]");
+      if (removeButton) removeButton.disabled = rows.length === 1;
+    });
+  };
+
+  addButton?.addEventListener("click", () => {
+    list.insertAdjacentHTML("beforeend", template.innerHTML.replaceAll("__INDEX__", String(nextIndex++)));
+    updateRemoveButtons();
+  });
+
+  list.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-remove-performance]");
+    if (!button || list.querySelectorAll("[data-performance-row]").length === 1) return;
+    button.closest("[data-performance-row]")?.remove();
+    updateRemoveButtons();
+  });
+
+  updateRemoveButtons();
+});

@@ -9,7 +9,7 @@
       <p class="er-hero__eyebrow">Encore score page</p>
       <h1 class="er-hero__title">{{ $show->title }}</h1>
 
-      <p class="er-hero__lead">{{ $show->summary ?? 'Audience reviews for this show are powered by verified TicketPal ticket data.' }}</p>
+      <p class="er-hero__lead">{{ $show->summary ?? 'Audience reviews and event information from Encore Reviews.' }}</p>
       <div class="er-hero__actions">
         @if($show->ticket_url)
           <a class="er-btn" href="{{ $show->ticket_url }}" target="_blank">Book tickets</a>
@@ -29,7 +29,7 @@
         <dl class="er-showMeta">
           <div><strong>Status:</strong> {{ strtoupper(str_replace('_', ' ', $show->status)) }}</div>
           <div><strong>Genre:</strong> {{ $show->genre ?? 'Not specified' }}</div>
-          <div><strong>Ticket source:</strong> {{ $show->ticket_url_source ?? 'TicketPal' }}</div>
+          <div><strong>Event source:</strong> {{ $show->provider_source === \App\Models\Show::SOURCE_MANUAL ? 'Organiser supplied' : ($show->ticket_url_source ?? 'TicketPal') }}</div>
         </dl>
       </div>
 
@@ -50,6 +50,22 @@
     </div>
   </div>
 </section>
+
+@if($show->performances->isNotEmpty())
+<section class="er-section er-section--alt" id="dates">
+  <div class="er-container">
+    <h2 class="er-h2">Event dates</h2>
+    <div class="er-grid">
+      @foreach($show->performances as $performance)
+        <div class="er-card">
+          <h3>{{ $performance->starts_at?->format('D j M Y, H:i') ?? 'Date to be confirmed' }}</h3>
+          <p>{{ $performance->venue?->name ?? 'Venue to be confirmed' }}@if($performance->venue?->city), {{ $performance->venue->city }}@endif</p>
+        </div>
+      @endforeach
+    </div>
+  </div>
+</section>
+@endif
 
 <section class="er-section er-section--alt" id="reviews">
   <div class="er-container">

@@ -49,6 +49,7 @@ class ShowController extends Controller
 
     public function show(Request $request, Show $show)
     {
+        $show->load(['performances' => fn ($query) => $query->with('venue')->orderBy('starts_at')]);
         $reviews = $show->reviews()
             ->with('reviewer')
             ->where('moderation_status', 'approved')

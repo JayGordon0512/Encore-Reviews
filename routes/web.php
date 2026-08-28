@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Admin\AudienceImportController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\ManualEventController;
 use App\Http\Controllers\Admin\OrganisationController;
 use App\Http\Controllers\Admin\ReviewModerationController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
@@ -28,6 +30,13 @@ Route::middleware('guest')->group(function (): void {
 Route::middleware(['auth', 'admin.active'])->group(function (): void {
     Route::get('/admin', DashboardController::class)->name('admin.dashboard');
     Route::patch('/admin/reviews/{review}', [ReviewModerationController::class, 'update'])->name('admin.reviews.update');
+    Route::get('/admin/events/create', [ManualEventController::class, 'create'])->name('admin.events.create');
+    Route::post('/admin/events', [ManualEventController::class, 'store'])->name('admin.events.store');
+    Route::get('/admin/events/{show}', [ManualEventController::class, 'show'])->name('admin.events.show');
+    Route::get('/admin/customer-import-template.csv', [AudienceImportController::class, 'template'])
+        ->name('admin.audience-imports.template');
+    Route::post('/admin/events/{show}/customers', [AudienceImportController::class, 'store'])
+        ->name('admin.audience-imports.store');
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
     Route::prefix('admin/encore')->name('super.')->middleware('super_admin')->group(function (): void {

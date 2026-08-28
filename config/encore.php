@@ -34,6 +34,12 @@ return [
         'claim_timeout_minutes' => (int) env('ENCORE_INVITATION_CLAIM_TIMEOUT_MINUTES', 5),
     ],
 
+    'audience_imports' => [
+        'contact_fingerprint_key' => env('ENCORE_CONTACT_FINGERPRINT_KEY'),
+        'contact_fingerprint_version' => (int) env('ENCORE_CONTACT_FINGERPRINT_VERSION', 1),
+        'max_rows' => (int) env('ENCORE_AUDIENCE_IMPORT_MAX_ROWS', 1000),
+    ],
+
     'ticketpal' => [
         'organiser_login_url' => env('ENCORE_TICKETPAL_ORGANISER_LOGIN_URL', 'https://ticketpal.co.uk/login'),
         'secret' => env('ENCORE_TICKETPAL_SECRET'),

@@ -242,6 +242,7 @@ Before a non-development deployment:
 
 - set `APP_ENV=production` and `APP_DEBUG=false`;
 - generate and protect `APP_KEY`;
+- set and retain `ENCORE_CONTACT_FINGERPRINT_KEY` before enabling organiser CSV imports;
 - replace placeholder database and TicketPal credentials;
 - restrict database and administration ports at the network boundary;
 - configure HTTPS and secure session settings;
@@ -249,6 +250,7 @@ Before a non-development deployment:
 - establish database backups and recovery tests;
 - define log retention and alerting;
 - review super-admin membership and deactivate unused users.
+- keep review invitation issuing separate from organiser CSV import activation.
 
 This checklist identifies operator responsibilities; the repository does not automate these production controls.
 

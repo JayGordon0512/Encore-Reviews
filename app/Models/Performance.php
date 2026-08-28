@@ -53,4 +53,14 @@ class Performance extends Model
     {
         return $this->hasMany(ReviewInvitation::class);
     }
+
+    public function audienceImports(): HasMany
+    {
+        return $this->hasMany(AudienceImport::class);
+    }
+
+    public function audienceAttendances(): HasMany
+    {
+        return $this->hasMany(AudienceAttendance::class);
+    }
 }

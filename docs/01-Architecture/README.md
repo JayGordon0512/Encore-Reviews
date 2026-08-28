@@ -61,6 +61,10 @@ approved TicketPal identity handoff.
 
 Authenticated, active users enter `/admin`. Customer administrators receive an organisation-scoped dashboard. They can approve or reject reviews belonging to performances of their organisation's shows.
 
+Customer administrators can also create provider-neutral events directly in Encore. One event owns one or more performance dates and may have an optional organiser ticket URL and venue. These records use the explicit `encore_manual` source and do not create or claim TicketPal mappings.
+
+For manual events, an organiser may upload a date-specific CSV containing an `email` column and optional `name` column. The organiser must affirm attendance and contact authority. Email addresses and names are encrypted in the protected contact store; deterministic keyed fingerprints support deduplication without placing customer addresses in attendance, import, or audit records. Database foreign keys enforce Organisation, show, performance, and import alignment. CSV imports record organiser-confirmed attendance only. They do not represent TicketPal verification and do not automatically issue review invitations.
+
 Tenant boundaries are applied through Laravel Policies and explicit query scoping. There is no global Eloquent tenant scope or PostgreSQL row-level security.
 
 ### Encore administration

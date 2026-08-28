@@ -810,6 +810,69 @@ html{ scroll-padding-top: 82px; }
   gap: 16px;
 }
 
+.er-formSection{
+  display:grid;
+  gap:16px;
+  min-width:0;
+  margin:0;
+  padding:20px;
+  border:1px solid var(--line);
+  border-radius:8px;
+}
+
+.er-formSection > legend,
+.er-formSection__header legend{
+  padding:0;
+  color:var(--ink);
+  font-size:1.05rem;
+  font-weight:800;
+}
+
+.er-formSection__header{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+}
+
+.er-formSection__header p{
+  margin:4px 0 0;
+  color:var(--muted);
+}
+
+.er-formGrid--three{
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+}
+
+.er-performanceEditor{
+  display:grid;
+  gap:12px;
+}
+
+.er-performanceRow{
+  display:grid;
+  grid-template-columns:minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items:end;
+  gap:12px;
+  padding:14px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:var(--soft);
+}
+
+.er-performanceRow__remove:disabled{
+  visibility:hidden;
+}
+
+.er-eventManagementGrid{
+  align-items:start;
+}
+
+.er-importTable .er-adminTable__head,
+.er-importTable .er-adminTable__row{
+  grid-template-columns:1.2fr 1.2fr 0.6fr 0.6fr;
+}
+
 .er-field{
   display:grid;
   gap: 7px;
@@ -1335,8 +1398,14 @@ textarea.er-input{
 
   .er-reviewShell,
   .er-formGrid,
-  .er-onboardingGrid{
+  .er-onboardingGrid,
+  .er-formGrid--three,
+  .er-performanceRow{
     grid-template-columns: 1fr;
+  }
+
+  .er-formSection__header{
+    flex-direction:column;
   }
 
   .er-onboardingDivider{

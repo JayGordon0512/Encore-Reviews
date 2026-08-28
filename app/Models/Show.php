@@ -13,6 +13,8 @@ class Show extends Model
 {
     use HasFactory, HasUuids;
 
+    public const SOURCE_MANUAL = 'encore_manual';
+
     public $incrementing = false;
 
     protected $keyType = 'string';
@@ -53,5 +55,15 @@ class Show extends Model
     public function reviews(): HasManyThrough
     {
         return $this->hasManyThrough(Review::class, Performance::class);
+    }
+
+    public function audienceImports(): HasMany
+    {
+        return $this->hasMany(AudienceImport::class);
+    }
+
+    public function audienceAttendances(): HasMany
+    {
+        return $this->hasMany(AudienceAttendance::class);
     }
 }

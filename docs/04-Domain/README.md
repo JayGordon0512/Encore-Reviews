@@ -111,6 +111,12 @@ created → usable → used
 
 `used_at` distinguishes consumed invitations. An invitation with no expiry does not expire, although the TicketPal endpoint defaults expiry to seven days.
 
+### Manual events and organiser audience imports
+
+An organiser-created Show uses `provider_source=encore_manual` and retains the same Organisation-root and Show-to-Performance ownership rules as an imported catalogue event. Its ticket URL is optional and each event has one or more Performance records.
+
+`AudienceImport` records the actor, Organisation, Show, selected Performance, row counts, attendance affirmation time, and correlation ID for one CSV upload. `AudienceAttendance` links the encrypted protected contact to that exact import and performance. A unique performance/contact constraint makes repeat uploads idempotent from the organiser's perspective. These records describe `organiser_confirmed` attendance, not provider-verified attendance, and are not review invitation authority until a separately approved issuing policy accepts that evidence class.
+
 ### Reviewer
 
 Represents a pseudonymized audience identity keyed by email hash.

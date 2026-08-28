@@ -148,15 +148,6 @@ class ShowsIndexTest extends TestCase
         $response->assertDontSee('/5 · 2 reviews');
     }
 
-    public function test_about_page_renders_previous_marketing_content(): void
-    {
-        $response = $this->get('/about');
-
-        $response->assertStatus(200);
-        $response->assertSee('What TicketPal organisers get');
-        $response->assertSee('How it works');
-    }
-
     public function test_organiser_benefits_page_renders_sales_content(): void
     {
         $response = $this->get('/organisers');
@@ -165,7 +156,7 @@ class ShowsIndexTest extends TestCase
         $response->assertSee('Turn real audience experience into lasting trust');
         $response->assertSee('Reviews people can trust');
         $response->assertSee('Clear ownership protects organisers and audiences');
-        $response->assertSee('Join the rollout');
+        $response->assertSee('Create organiser account');
     }
 
     public function test_public_navigation_links_to_the_organiser_benefits_page(): void
@@ -175,6 +166,9 @@ class ShowsIndexTest extends TestCase
         $response->assertOk();
         $response->assertSee('For organisers');
         $response->assertSee(route('organisers'));
+        $response->assertSee('Create account');
+        $response->assertSee(route('organisers.create'));
+        $response->assertDontSee('>About<', false);
     }
 
     private function createShow(array $attributes = []): Show

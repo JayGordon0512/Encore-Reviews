@@ -35,6 +35,7 @@ return [
     ],
 
     'ticketpal' => [
+        'organiser_login_url' => env('ENCORE_TICKETPAL_ORGANISER_LOGIN_URL', 'https://ticketpal.co.uk/login'),
         'secret' => env('ENCORE_TICKETPAL_SECRET'),
         'signature_tolerance_seconds' => (int) env('ENCORE_TICKETPAL_SIGNATURE_TOLERANCE', 300),
         'max_event_attempts' => (int) env('ENCORE_TICKETPAL_MAX_EVENT_ATTEMPTS', 3),

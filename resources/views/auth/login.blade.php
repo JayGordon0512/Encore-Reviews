@@ -34,6 +34,8 @@
 
       <button class="er-btn" type="submit">Log in</button>
     </form>
+
+    <p class="er-onboardingLogin">Need an organiser account? <a href="{{ route('organisers.create') }}">Create one or continue with TicketPal</a>.</p>
   </div>
 </section>
 @endsection

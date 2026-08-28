@@ -17,7 +17,7 @@
       </p>
       <div class="er-hero__actions">
         <a class="er-btn" href="#benefits">See the benefits</a>
-        <a class="er-btn er-btn--ghost" href="#get-started">Join the rollout</a>
+        <a class="er-btn er-btn--ghost" href="{{ route('organisers.create') }}">Create organiser account</a>
       </div>
     </div>
   </div>
@@ -122,9 +122,9 @@
     <div>
       <p class="er-hero__eyebrow">For TicketPal organisers</p>
       <h2 class="er-h2">Be among the first to build your Encore reputation</h2>
-      <p>Encore Reviews is being introduced to TicketPal organisers in stages. Ask your TicketPal contact about joining the rollout.</p>
+      <p>Create your Encore organiser account, or continue with your existing TicketPal organiser login.</p>
     </div>
-    <a class="er-btn" href="https://ticketpal.co.uk">Visit TicketPal</a>
+    <a class="er-btn" href="{{ route('organisers.create') }}">Create organiser account</a>
   </div>
 </section>
 @endsection

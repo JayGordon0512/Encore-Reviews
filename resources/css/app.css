@@ -648,6 +648,106 @@ html{ scroll-padding-top: 82px; }
   max-width: 560px;
 }
 
+.er-onboardingHeader{
+  max-width:760px;
+}
+
+.er-onboardingGrid{
+  display:grid;
+  grid-template-columns: minmax(0, 0.82fr) 44px minmax(0, 1.18fr);
+  align-items:start;
+  gap:20px;
+}
+
+.er-ticketPalAccess,
+.er-organiserRegistration{
+  padding:28px;
+}
+
+.er-ticketPalAccess{
+  position:sticky;
+  top:104px;
+  color:rgba(255,255,255,0.88);
+  background:var(--brand);
+}
+
+.er-ticketPalAccess h2{
+  margin:6px 0 12px;
+  color:#fff;
+}
+
+.er-ticketPalAccess .er-hero__eyebrow{
+  color:var(--gold);
+}
+
+.er-ticketPalAccess__button{
+  width:100%;
+  justify-content:center;
+  margin-top:10px;
+  background:#fff;
+  color:var(--brand);
+}
+
+.er-ticketPalAccess__note{
+  margin:12px 0 0;
+  color:rgba(255,255,255,0.7);
+  font-size:0.9rem;
+  text-align:center;
+}
+
+.er-onboardingDivider{
+  min-height:360px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  color:var(--muted);
+  font-weight:800;
+  text-transform:uppercase;
+}
+
+.er-onboardingDivider::before{
+  content:"";
+  position:absolute;
+  inset:0 50%;
+  width:1px;
+  background:var(--line);
+}
+
+.er-onboardingDivider span{
+  position:relative;
+  padding:10px 0;
+  background:var(--soft);
+}
+
+.er-organiserRegistration h2{
+  margin:6px 0 8px;
+}
+
+.er-organiserRegistration > div:first-child p:last-child{
+  margin-bottom:0;
+}
+
+.er-fieldHint{
+  margin:-8px 0 0;
+  color:var(--muted);
+  font-size:0.9rem;
+}
+
+.er-authorityChoice{
+  align-items:flex-start;
+}
+
+.er-authorityChoice input{
+  margin-top:4px;
+}
+
+.er-onboardingLogin{
+  margin:22px 0 0;
+  text-align:center;
+  color:var(--muted);
+}
+
 .er-fieldError{
   margin:0;
   color: var(--danger);
@@ -1234,8 +1334,28 @@ textarea.er-input{
   }
 
   .er-reviewShell,
-  .er-formGrid{
+  .er-formGrid,
+  .er-onboardingGrid{
     grid-template-columns: 1fr;
+  }
+
+  .er-onboardingDivider{
+    min-height:auto;
+    height:44px;
+  }
+
+  .er-onboardingDivider::before{
+    inset:50% 0;
+    width:auto;
+    height:1px;
+  }
+
+  .er-onboardingDivider span{
+    padding:0 12px;
+  }
+
+  .er-ticketPalAccess{
+    position:static;
   }
 
   .er-organiserProof__grid,

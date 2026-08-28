@@ -25,11 +25,6 @@ class HomeController extends Controller
         ]);
     }
 
-    public function about()
-    {
-        return view('public.about');
-    }
-
     public function organisers()
     {
         return view('public.organisers');

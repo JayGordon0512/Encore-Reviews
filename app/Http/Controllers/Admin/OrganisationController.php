@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Organisation;
+use App\Models\OrganisationUserMembership;
 use App\Models\Show;
 use App\Models\User;
 use App\Services\AuditLogger;
@@ -66,6 +67,12 @@ class OrganisationController extends Controller
                 'email' => $validated['admin_email'],
                 'password' => $validated['admin_password'],
                 'role' => 'customer_admin',
+                'is_active' => true,
+            ]);
+            OrganisationUserMembership::create([
+                'organisation_id' => $organisation->id,
+                'user_id' => $user->id,
+                'role' => 'owner',
                 'is_active' => true,
             ]);
 
@@ -164,6 +171,12 @@ class OrganisationController extends Controller
                 'role' => 'customer_admin',
                 'is_active' => true,
             ]);
+            OrganisationUserMembership::create([
+                'organisation_id' => $organisation->id,
+                'user_id' => $user->id,
+                'role' => 'administrator',
+                'is_active' => true,
+            ]);
             $this->recordAudit(
                 $request,
                 'organisation.user_created',
@@ -197,6 +210,10 @@ class OrganisationController extends Controller
 
         DB::transaction(function () use ($request, $organisation, $user, $validated, $fields, $before): void {
             $user->update($validated);
+            OrganisationUserMembership::query()
+                ->where('organisation_id', $organisation->id)
+                ->where('user_id', $user->id)
+                ->update(['is_active' => $user->is_active, 'updated_at' => now()]);
             $this->recordAudit(
                 $request,
                 'organisation.user_updated',

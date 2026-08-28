@@ -19,11 +19,11 @@
     <nav class="er-nav" aria-label="Primary">
       <a class="er-nav__link" href="{{ route('shows.index') }}">Shows</a>
       <a class="er-nav__link" href="{{ route('organisers') }}">For organisers</a>
-      <a class="er-nav__link" href="{{ route('about') }}">About</a>
       @auth
         <a class="er-nav__link" href="{{ route('admin.dashboard') }}">Admin</a>
       @else
         <a class="er-nav__link" href="{{ route('login') }}">Login</a>
+        <a class="er-nav__link" href="{{ route('organisers.create') }}">Create account</a>
       @endauth
       <a class="er-nav__link" href="#footer">Contact</a>
     </nav>
@@ -41,11 +41,11 @@
     <div class="er-container er-mobileMenu__inner">
       <a class="er-mobileMenu__link" href="{{ route('shows.index') }}">Shows</a>
       <a class="er-mobileMenu__link" href="{{ route('organisers') }}">For organisers</a>
-      <a class="er-mobileMenu__link" href="{{ route('about') }}">About</a>
       @auth
         <a class="er-mobileMenu__link" href="{{ route('admin.dashboard') }}">Admin</a>
       @else
         <a class="er-mobileMenu__link" href="{{ route('login') }}">Login</a>
+        <a class="er-mobileMenu__link" href="{{ route('organisers.create') }}">Create account</a>
       @endauth
       <a class="er-mobileMenu__link" href="#footer">Contact</a>
     </div>

@@ -61,6 +61,12 @@ class SuperAdminTest extends TestCase
             'role' => 'customer_admin',
             'is_active' => true,
         ]);
+        $this->assertDatabaseHas('organisation_user_memberships', [
+            'organisation_id' => $organisation->id,
+            'user_id' => User::where('email', 'manager@theatre.test')->value('id'),
+            'role' => 'owner',
+            'is_active' => true,
+        ]);
 
         $logs = AuditLog::query()->orderBy('created_at')->get();
         $this->assertCount(2, $logs);

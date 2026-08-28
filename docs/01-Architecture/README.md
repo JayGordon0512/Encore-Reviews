@@ -48,7 +48,14 @@ Redis, Mailpit, Meilisearch, and pgAdmin are provisioned by Docker Compose. The 
 
 ### Public web
 
-Public routes render the homepage, about page, show directory, show detail pages, and review submission form. Public show queries exclude archived shows. Public review output and scores include only approved reviews.
+Public routes render the homepage, organiser benefits and account-creation pages, show directory, show detail pages, and invitation-gated review submission form. Public show queries exclude archived shows. Public review output and scores include only approved reviews.
+
+New non-TicketPal organiser registrations create inactive Organisation, user and
+membership records in `pending_review` state. No dashboard session is created
+until Encore verifies and activates the account. Existing TicketPal organisers
+are directed to TicketPal for authentication; Encore does not collect or proxy
+TicketPal passwords. A complete cross-product login requires a separately
+approved TicketPal identity handoff.
 
 ### Customer administration
 

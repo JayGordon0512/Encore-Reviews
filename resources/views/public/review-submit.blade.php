@@ -2,6 +2,11 @@
 
 @section('title', 'Submit your review — Encore Reviews')
 
+@section('head')
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+@endsection
+
 @section('content')
 <section class="er-section er-reviewPage">
   <div class="er-container er-reviewPage__inner">

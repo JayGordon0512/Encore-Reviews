@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Domain\Invitations\InvitationToken;
 use App\Http\Controllers\Controller;
 use App\Models\Review;
 use App\Models\Reviewer;
@@ -13,6 +14,8 @@ use Illuminate\Support\Str;
 
 class ReviewController extends Controller
 {
+    public function __construct(private readonly InvitationToken $tokens) {}
+
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -27,14 +30,15 @@ class ReviewController extends Controller
         ]);
 
         $emailHash = hash('sha256', Str::lower(trim($validated['email'])));
-        $tokenHash = hash('sha256', $validated['invitation_token']);
+        $tokenHashes = $this->tokens->lookupDigests($validated['invitation_token']);
 
-        $result = DB::transaction(function () use ($emailHash, $tokenHash, $validated): array {
+        $result = DB::transaction(function () use ($emailHash, $tokenHashes, $validated): array {
             $invitation = ReviewInvitation::query()
                 ->with('performance.show')
-                ->where('token_hash', $tokenHash)
+                ->whereIn('token_hash', $tokenHashes)
                 ->whereNotNull('sent_at')
                 ->whereNull('used_at')
+                ->whereNull('revoked_at')
                 ->where(function ($query) {
                     $query->whereNull('expires_at')
                         ->orWhere('expires_at', '>', now());
@@ -72,8 +76,7 @@ class ReviewController extends Controller
                 'submitted_at' => now(),
             ]);
 
-            $invitation->used_at = now();
-            $invitation->save();
+            $invitation->forceFill(['status' => 'used', 'used_at' => now()])->save();
 
             return ['review' => $review];
         });

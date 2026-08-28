@@ -68,4 +68,5 @@ A release record must distinguish implementation completion, deployment completi
 | Release | Status | Purpose |
 | --- | --- | --- |
 | [v1.0.0 Provider API v2 Local Build](v1.0.0-provider-v2-local-build.md) | Implemented locally; activation prohibited | Records the disabled Release 1 provider hand-off implementation and remaining gates. |
+| [v1.1.0 Invitation Delivery Foundation](v1.1.0-invitation-delivery-foundation.md) | Implemented locally; activation prohibited | Adds Encore-owned, queued and retryable invitation email delivery behind the existing issuing control. |
 | [v0.3.0 Enterprise Foundation](v0.3.0-Enterprise-Foundation.md) | Architectural baseline | Formally closes the Enterprise Foundation Programme and establishes the future-development baseline. |

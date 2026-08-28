@@ -2,6 +2,11 @@
 
 @section('title', 'Review invitation unavailable — Encore Reviews')
 
+@section('head')
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+@endsection
+
 @section('content')
 <section class="er-section">
   <div class="er-container">

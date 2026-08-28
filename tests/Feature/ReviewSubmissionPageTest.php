@@ -49,6 +49,10 @@ class ReviewSubmissionPageTest extends TestCase
         $response = $this->get('/review/submit?token='.$token);
 
         $response->assertOk();
+        $response->assertHeader('Referrer-Policy', 'no-referrer');
+        $response->assertHeader('X-Robots-Tag', 'noindex, nofollow');
+        $response->assertSee('<meta name="referrer" content="no-referrer">', false);
+        $response->assertSee('<meta name="robots" content="noindex, nofollow">', false);
         $response->assertSee('You’re reviewing');
         $response->assertSee('Review Target Show');
         $response->assertSee(

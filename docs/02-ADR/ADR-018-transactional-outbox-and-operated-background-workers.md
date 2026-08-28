@@ -11,6 +11,11 @@ This document contributes to that purpose.
 - Supersedes: Proposed ADR-007 and proposed ADR-008
 - Depends on: ADR-016 and ADR-017
 
+Implementation note (27 August 2026): the first identifier-only invitation job,
+due-work dispatcher, bounded delivery state and explicit dead-letter state are
+implemented behind the disabled issuing flag. Operated worker monitoring and
+recovery evidence remain activation gates, so this ADR remains Proposed.
+
 ## Context
 
 The repository contains queue tables/configuration but no business jobs,

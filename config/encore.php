@@ -25,6 +25,15 @@ return [
         ],
     ],
 
+    'invitations' => [
+        'token_digest_key' => env('ENCORE_INVITATION_TOKEN_DIGEST_KEY'),
+        'previous_token_digest_keys' => array_values(array_filter(explode(',', (string) env('ENCORE_INVITATION_PREVIOUS_TOKEN_DIGEST_KEYS', '')))),
+        'expiry_days' => (int) env('ENCORE_INVITATION_EXPIRY_DAYS', 7),
+        'max_attempts' => (int) env('ENCORE_INVITATION_MAX_ATTEMPTS', 3),
+        'retry_delay_minutes' => (int) env('ENCORE_INVITATION_RETRY_DELAY_MINUTES', 15),
+        'claim_timeout_minutes' => (int) env('ENCORE_INVITATION_CLAIM_TIMEOUT_MINUTES', 5),
+    ],
+
     'ticketpal' => [
         'secret' => env('ENCORE_TICKETPAL_SECRET'),
         'signature_tolerance_seconds' => (int) env('ENCORE_TICKETPAL_SIGNATURE_TOLERANCE', 300),

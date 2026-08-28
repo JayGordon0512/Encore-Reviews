@@ -15,7 +15,7 @@ The repository is configured for Laravel Sail and Docker Compose. The Compose ap
 | Laravel | `laravel.test` | 80; Vite 5173 | Application runtime |
 | PostgreSQL | `pgsql` | 5432 | Primary relational database |
 | Redis | `redis` | 6379 | Provisioned; no application-specific workflow documented |
-| Mailpit | `mailpit` | 1025/8025 | Development mail service; invitations are not emailed by current code |
+| Mailpit | `mailpit` | 1025/8025 | Development delivery target for the disabled-by-default invitation issuer |
 | Meilisearch | `meilisearch` | 7700 | Provisioned; public search is not implemented |
 | pgAdmin | `pgadmin` | 5050 | Local database administration UI |
 
@@ -77,6 +77,49 @@ The command requests and confirms a password without accepting it as a command-l
 ./vendor/bin/sail up -d
 npm run dev
 ```
+
+## Invitation delivery operations
+
+Invitation delivery is implemented but disabled by default. It requires two
+supervised runtime processes in addition to the web application:
+
+```bash
+php artisan schedule:work
+php artisan queue:work database --queue=invitations --tries=1 --timeout=60 --sleep=3
+```
+
+The scheduler dispatches only schedule UUIDs. The queue and failed-job payloads
+must never contain reviewer email, display name or invitation tokens.
+
+Before enabling issuing, configure a secure current token digest key, retain an
+old key only during a controlled rotation overlap, and configure the same
+approved delivery provider used by TicketPal. Encore must use its own verified
+sender identity and separately rotatable credentials; sharing a provider does
+not merge TicketPal and Encore delivery data or application ownership:
+
+```dotenv
+ENCORE_INVITATION_TOKEN_DIGEST_KEY=<random-secret>
+ENCORE_INVITATION_PREVIOUS_TOKEN_DIGEST_KEYS=
+MAIL_MAILER=<ticketpal-approved-mailer>
+MAIL_FROM_ADDRESS=reviews@encorereviews.co.uk
+MAIL_FROM_NAME="Encore Reviews"
+```
+
+Inspect due-work dispatch without exposing contact data:
+
+```bash
+php artisan encore:invitations:dispatch-due --limit=100
+php artisan queue:monitor invitations:100
+```
+
+Activation requires monitoring for worker health, oldest scheduled work, queue
+depth, `review_invitation_schedules.status = dead_lettered`, and
+`failed_jobs`. Resolve the mail or configuration cause before rescheduling a
+dead letter; never edit an invitation token digest or contact ciphertext.
+
+Keep `ENCORE_PROVIDER_V2_INVITATION_ISSUING_ENABLED=false` until the supervised
+processes, mail sender identity, monitoring, keys and controlled staging journey
+have all been verified.
 
 Useful checks:
 

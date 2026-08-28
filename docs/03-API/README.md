@@ -57,6 +57,13 @@ stores encrypted contact data, immutable consent evidence, one eligibility,
 one invitation schedule, audit evidence and a token-free transactional outbox
 message. Withdrawal is non-disclosing and cancels unissued activity.
 
+The disabled-by-default invitation issuer now dispatches due schedules through
+an identifier-only `invitations` queue job. It creates a keyed, versioned token,
+sends the Encore-owned review email, records token-free delivery evidence and
+revokes/replaces a token after delivery failure. This implementation does not
+authorize activation; supervised scheduler/worker operation, mail configuration
+and the staging acceptance journey remain required.
+
 - Requests should use `Content-Type: application/json`.
 - Laravel validation failures return HTTP 422 with the standard `message` and `errors` object.
 - Unexpected server failures use Laravel's configured exception behavior.

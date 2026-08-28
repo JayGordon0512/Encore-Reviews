@@ -6,6 +6,7 @@
 
   <title>@yield('title', 'Encore Reviews — Powered by TicketPal')</title>
   <meta name="description" content="@yield('meta_description', 'Audience reviews for live events — powered by TicketPal.')">
+  @yield('head')
   @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="er-body">

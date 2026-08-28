@@ -12,6 +12,7 @@ use App\Models\ProtectedReviewerContact;
 use App\Models\ReviewConsentEvidence;
 use App\Models\ReviewEligibility;
 use App\Models\ReviewEligibilityWithdrawal;
+use App\Models\ReviewInvitation;
 use App\Models\ReviewInvitationSchedule;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
@@ -100,6 +101,7 @@ final class ProviderV2ReviewEligibilityService
                 ->addHours((int) config('encore.provider_v2.invitation_delay_hours'));
             ReviewInvitationSchedule::create([
                 'eligibility_id' => $eligibility->id,
+                'correlation_id' => $correlationId,
                 'scheduled_for' => $scheduleAt,
                 'status' => config('encore.provider_v2.invitation_issuing_enabled') ? 'scheduled' : 'suppressed',
                 'suppression_reason' => config('encore.provider_v2.invitation_issuing_enabled')
@@ -148,8 +150,18 @@ final class ProviderV2ReviewEligibilityService
             if ($eligibility) {
                 $eligibility->forceFill(['status' => 'withdrawn', 'withdrawn_at' => $payload['withdrawn_at']])->save();
                 ReviewInvitationSchedule::query()->where('eligibility_id', $eligibility->id)
-                    ->whereIn('status', ['scheduled', 'suppressed'])
+                    ->whereIn('status', ['scheduled', 'suppressed', 'processing', 'issued'])
                     ->update(['status' => 'cancelled', 'suppression_reason' => 'consent_withdrawn', 'cancelled_at' => now()]);
+                ReviewInvitation::query()
+                    ->where('eligibility_id', $eligibility->id)
+                    ->whereNull('used_at')
+                    ->whereNull('revoked_at')
+                    ->update([
+                        'status' => 'revoked',
+                        'revoked_at' => now(),
+                        'revocation_reason' => 'consent_withdrawn',
+                        'updated_at' => now(),
+                    ]);
             }
 
             $withdrawal = ReviewEligibilityWithdrawal::create([

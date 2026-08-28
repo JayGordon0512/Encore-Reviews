@@ -16,12 +16,17 @@ class ReviewInvitation extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
+        'eligibility_id',
         'performance_id',
         'email_hash',
         'token_hash',
+        'token_version',
+        'status',
         'sent_at',
         'expires_at',
         'used_at',
+        'revoked_at',
+        'revocation_reason',
         'provider_source',
         'provider_booking_id',
         'provider_ticket_id',
@@ -34,10 +39,17 @@ class ReviewInvitation extends Model
         'expires_at' => 'datetime',
         'sent_at' => 'datetime',
         'used_at' => 'datetime',
+        'revoked_at' => 'datetime',
+        'token_version' => 'integer',
     ];
 
     public function performance(): BelongsTo
     {
         return $this->belongsTo(Performance::class);
+    }
+
+    public function eligibility(): BelongsTo
+    {
+        return $this->belongsTo(ReviewEligibility::class);
     }
 }

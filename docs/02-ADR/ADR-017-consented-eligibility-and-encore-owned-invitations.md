@@ -12,6 +12,11 @@ This document contributes to that purpose.
 - Supersedes: Current provider-owned direct invitation creation and token return
 - Depends on: ADR-016
 
+Implementation note (27 August 2026): the invitation issuer, keyed token
+digests, token-free delivery evidence, replacement-on-failure behavior and
+consent-withdrawal revocation are implemented behind the disabled issuing flag.
+This evidence does not change the Proposed status or authorize activation.
+
 ## Context
 
 The current TicketPal endpoint creates an Encore invitation immediately for a

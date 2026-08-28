@@ -14,11 +14,17 @@ class ReviewInvitationSchedule extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
-        'eligibility_id', 'scheduled_for', 'status', 'suppression_reason', 'cancelled_at',
+        'eligibility_id', 'correlation_id', 'scheduled_for', 'status', 'attempts',
+        'claimed_at', 'issued_at', 'dead_lettered_at', 'suppression_reason',
+        'last_error_code', 'cancelled_at',
     ];
 
     protected function casts(): array
     {
-        return ['scheduled_for' => 'datetime', 'cancelled_at' => 'datetime'];
+        return [
+            'scheduled_for' => 'datetime', 'attempts' => 'integer',
+            'claimed_at' => 'datetime', 'issued_at' => 'datetime',
+            'dead_lettered_at' => 'datetime', 'cancelled_at' => 'datetime',
+        ];
     }
 }

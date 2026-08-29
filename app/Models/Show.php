@@ -26,6 +26,8 @@ class Show extends Model
         'description',
         'genre',
         'primary_image_path',
+        'primary_image_disk',
+        'primary_image_storage_path',
         'status',
         'lifecycle_status',
         'reviews_locked',
@@ -65,5 +67,16 @@ class Show extends Model
     public function audienceAttendances(): HasMany
     {
         return $this->hasMany(AudienceAttendance::class);
+    }
+
+    public function artworkPath(): string
+    {
+        if (filled($this->primary_image_path)) {
+            return $this->primary_image_path;
+        }
+
+        return $this->provider_source === self::SOURCE_MANUAL
+            ? 'assets/encore-event-placeholder.svg'
+            : 'assets/hero-show-bg.jpg';
     }
 }

@@ -3,7 +3,7 @@
 @section('title', $show->title.' — Encore Reviews')
 
 @section('content')
-<header class="er-hero er-hero--image" style="background-image: url('{{ asset($show->primary_image_path ?: 'assets/hero-show-bg.jpg') }}');">
+<header class="er-hero er-hero--image" style="background-image: url('{{ asset($show->artworkPath()) }}');">
   <div class="er-container">
     <div class="er-hero__content">
       <p class="er-hero__eyebrow">Encore score page</p>

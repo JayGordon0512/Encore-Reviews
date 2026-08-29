@@ -121,6 +121,28 @@ Keep `ENCORE_PROVIDER_V2_INVITATION_ISSUING_ENABLED=false` until the supervised
 processes, mail sender identity, monitoring, keys and controlled staging journey
 have all been verified.
 
+## Organiser artwork storage
+
+Local development may use `ENCORE_EVENT_IMAGE_DISK=public` after running
+`php artisan storage:link`. Deployed App Platform containers must use durable
+object storage. For a DigitalOcean Space in London, configure the S3-compatible
+disk without committing credentials:
+
+```dotenv
+ENCORE_EVENT_IMAGE_DISK=s3
+AWS_ACCESS_KEY_ID=<spaces-access-key>
+AWS_SECRET_ACCESS_KEY=<spaces-secret-key>
+AWS_DEFAULT_REGION=lon1
+AWS_BUCKET=<space-name>
+AWS_ENDPOINT=https://lon1.digitaloceanspaces.com
+AWS_URL=https://<space-name>.lon1.digitaloceanspaces.com
+AWS_USE_PATH_STYLE_ENDPOINT=false
+```
+
+Use a dedicated Space or restricted key whose policy is limited to Encore event
+artwork. Uploaded objects are public by design because show cards and public show
+pages display them without authentication.
+
 Useful checks:
 
 ```bash
@@ -243,6 +265,7 @@ Before a non-development deployment:
 - set `APP_ENV=production` and `APP_DEBUG=false`;
 - generate and protect `APP_KEY`;
 - set and retain `ENCORE_CONTACT_FINGERPRINT_KEY` before enabling organiser CSV imports;
+- set `ENCORE_EVENT_IMAGE_DISK=s3` and configure durable S3-compatible object storage before accepting organiser artwork; local App Platform storage is not durable across deployments;
 - replace placeholder database and TicketPal credentials;
 - restrict database and administration ports at the network boundary;
 - configure HTTPS and secure session settings;

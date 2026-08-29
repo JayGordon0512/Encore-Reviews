@@ -18,7 +18,7 @@
       <div class="er-notice er-notice--error" role="alert">Please correct the highlighted fields.</div>
     @endif
 
-    <form class="er-card er-form" method="POST" action="{{ route('admin.events.store') }}">
+    <form class="er-card er-form" method="POST" action="{{ route('admin.events.store') }}" enctype="multipart/form-data">
       @csrf
 
       <div class="er-formGrid">
@@ -51,6 +51,13 @@
         <input class="er-input" type="url" id="ticket_url" name="ticket_url" value="{{ old('ticket_url') }}" placeholder="https://">
         <p class="er-fieldHint">Leave blank if tickets are not sold online.</p>
         @error('ticket_url')<p class="er-fieldError">{{ $message }}</p>@enderror
+      </div>
+
+      <div class="er-field">
+        <label for="event_image">Event artwork <span class="er-muted">(optional)</span></label>
+        <input class="er-input" type="file" id="event_image" name="event_image" accept="image/jpeg,image/png,image/webp">
+        <p class="er-fieldHint">JPEG, PNG or WebP, up to {{ round(config('encore.event_images.max_size_kb') / 1024) }} MB. Use at least 1200 × 675 pixels for the best result. The Encore monogram appears until artwork is uploaded.</p>
+        @error('event_image')<p class="er-fieldError">{{ $message }}</p>@enderror
       </div>
 
       <fieldset class="er-formSection">

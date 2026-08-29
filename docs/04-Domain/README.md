@@ -115,6 +115,8 @@ created → usable → used
 
 An organiser-created Show uses `provider_source=encore_manual` and retains the same Organisation-root and Show-to-Performance ownership rules as an imported catalogue event. Its ticket URL is optional and each event has one or more Performance records.
 
+Organiser-uploaded artwork records a public image URL together with its storage disk and object path. These storage-provenance fields remain null for provider-supplied artwork. Manual events without custom artwork resolve to the Encore monogram placeholder.
+
 `AudienceImport` records the actor, Organisation, Show, selected Performance, row counts, attendance affirmation time, and correlation ID for one CSV upload. `AudienceAttendance` links the encrypted protected contact to that exact import and performance. A unique performance/contact constraint makes repeat uploads idempotent from the organiser's perspective. These records describe `organiser_confirmed` attendance, not provider-verified attendance, and are not review invitation authority until a separately approved issuing policy accepts that evidence class.
 
 ### Reviewer

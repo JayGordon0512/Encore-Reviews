@@ -40,6 +40,11 @@ return [
         'max_rows' => (int) env('ENCORE_AUDIENCE_IMPORT_MAX_ROWS', 1000),
     ],
 
+    'event_images' => [
+        'disk' => env('ENCORE_EVENT_IMAGE_DISK', 'public'),
+        'max_size_kb' => (int) env('ENCORE_EVENT_IMAGE_MAX_SIZE_KB', 5120),
+    ],
+
     'ticketpal' => [
         'organiser_login_url' => env('ENCORE_TICKETPAL_ORGANISER_LOGIN_URL', 'https://ticketpal.co.uk/login'),
         'secret' => env('ENCORE_TICKETPAL_SECRET'),

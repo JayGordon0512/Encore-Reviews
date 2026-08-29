@@ -65,6 +65,8 @@ Customer administrators can also create provider-neutral events directly in Enco
 
 For manual events, an organiser may upload a date-specific CSV containing an `email` column and optional `name` column. The organiser must affirm attendance and contact authority. Email addresses and names are encrypted in the protected contact store; deterministic keyed fingerprints support deduplication without placing customer addresses in attendance, import, or audit records. Database foreign keys enforce Organisation, show, performance, and import alignment. CSV imports record organiser-confirmed attendance only. They do not represent TicketPal verification and do not automatically issue review invitations.
 
+Manual event artwork is organiser-owned media stored under an organisation-scoped random path through the configured event-image disk. JPEG, PNG and WebP uploads are accepted and original filenames are not retained. Storage provenance remains on the Show so replacement can remove the previous object safely. TicketPal artwork remains provider supplied and is not copied into Encore-owned storage. A manual event without artwork uses the Encore monogram placeholder.
+
 Tenant boundaries are applied through Laravel Policies and explicit query scoping. There is no global Eloquent tenant scope or PostgreSQL row-level security.
 
 ### Encore administration

@@ -11,7 +11,7 @@
 <article class="er-card er-showCard">
   <a class="er-showCard__media" href="{{ route('shows.show', $show) }}" aria-label="View {{ $show->title }}">
     <img
-      src="{{ asset($show->primary_image_path ?: 'assets/hero-show-bg.jpg') }}"
+      src="{{ asset($show->artworkPath()) }}"
       alt="{{ $show->title }} event artwork"
       loading="lazy"
       decoding="async"

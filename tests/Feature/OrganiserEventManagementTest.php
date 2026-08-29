@@ -12,6 +12,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class OrganiserEventManagementTest extends TestCase
@@ -26,6 +27,8 @@ class OrganiserEventManagementTest extends TestCase
             'encore.audience_imports.contact_fingerprint_key' => 'organiser-import-test-key',
             'encore.audience_imports.contact_fingerprint_version' => 1,
             'encore.audience_imports.max_rows' => 1000,
+            'encore.event_images.disk' => 'public',
+            'encore.event_images.max_size_kb' => 5120,
         ]);
     }
 
@@ -93,7 +96,79 @@ class OrganiserEventManagementTest extends TestCase
         $public->assertSee('Event dates');
         $public->assertSee('Organiser supplied');
         $public->assertSee('Fri 2 May 2031, 20:00');
+        $public->assertSee('assets/encore-event-placeholder.svg', false);
         $public->assertDontSee('powered by verified TicketPal ticket data');
+    }
+
+    public function test_organiser_can_upload_tenant_scoped_artwork_when_creating_an_event(): void
+    {
+        Storage::fake('public');
+        [$organisation, $user] = $this->organiser('Artwork Organisation');
+
+        $response = $this->actingAs($user)->post(route('admin.events.store'), [
+            'title' => 'Illustrated Event',
+            'event_image' => UploadedFile::fake()->image('poster.jpg', 1200, 675),
+            'performances' => [
+                ['starts_at' => '2032-06-10T19:30', 'ends_at' => ''],
+            ],
+        ]);
+
+        $show = Show::where('title', 'Illustrated Event')->firstOrFail();
+        $response->assertRedirect(route('admin.events.show', $show));
+        $this->assertSame('public', $show->primary_image_disk);
+        $this->assertStringStartsWith('event-artwork/'.$organisation->id.'/', $show->primary_image_storage_path);
+        $this->assertStringEndsWith('.jpg', $show->primary_image_storage_path);
+        Storage::disk('public')->assertExists($show->primary_image_storage_path);
+
+        $public = $this->get(route('shows.show', $show));
+        $public->assertOk()->assertSee($show->primary_image_path, false);
+        $this->assertTrue(AuditLog::where('action', 'event.manual_created')->sole()->after_state['has_custom_artwork']);
+    }
+
+    public function test_organiser_can_replace_artwork_and_other_tenants_cannot(): void
+    {
+        Storage::fake('public');
+        [, $owner, $show] = $this->manualEvent('Replaceable Artwork');
+        Storage::disk('public')->put('event-artwork/'.$show->organisation_id.'/old.jpg', 'old artwork');
+        $show->update([
+            'primary_image_path' => '/storage/event-artwork/'.$show->organisation_id.'/old.jpg',
+            'primary_image_disk' => 'public',
+            'primary_image_storage_path' => 'event-artwork/'.$show->organisation_id.'/old.jpg',
+        ]);
+        [, $otherUser] = $this->organiser('Artwork Intruder');
+
+        $this->actingAs($otherUser)->patch(route('admin.events.artwork.update', $show), [
+            'event_image' => UploadedFile::fake()->image('intruder.jpg', 1200, 675),
+        ])->assertNotFound();
+
+        $response = $this->actingAs($owner)->patch(route('admin.events.artwork.update', $show), [
+            'event_image' => UploadedFile::fake()->image('replacement.png', 1200, 675),
+        ]);
+
+        $response->assertRedirect()->assertSessionHas('status', 'Event artwork updated.');
+        $show->refresh();
+        Storage::disk('public')->assertMissing('event-artwork/'.$show->organisation_id.'/old.jpg');
+        Storage::disk('public')->assertExists($show->primary_image_storage_path);
+        $this->assertStringEndsWith('.png', $show->primary_image_storage_path);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'event.manual_artwork_updated',
+            'organisation_id' => $show->organisation_id,
+        ]);
+    }
+
+    public function test_event_artwork_rejects_unsafe_or_too_small_files(): void
+    {
+        [, $user, $show] = $this->manualEvent('Validated Artwork');
+
+        $this->actingAs($user)->from(route('admin.events.show', $show))
+            ->patch(route('admin.events.artwork.update', $show), [
+                'event_image' => UploadedFile::fake()->createWithContent('poster.svg', '<svg></svg>'),
+            ])->assertSessionHasErrors('event_image');
+
+        $this->actingAs($user)->from(route('admin.events.show', $show))
+            ->patch(route('admin.events.artwork.update', $show), [
+                'event_image' => UploadedFile::fake()->image('tiny.jpg', 200, 200),
+            ])->assertSessionHasErrors('event_image');
     }
 
     public function test_organiser_can_import_encrypted_deduplicated_customers_for_one_date(): void

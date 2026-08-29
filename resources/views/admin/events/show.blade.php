@@ -25,6 +25,22 @@
     @endif
 
     <div class="er-adminGrid er-eventManagementGrid">
+      <section class="er-card er-artworkManager">
+        <h2 class="er-adminTitle">Event artwork</h2>
+        <img class="er-artworkManager__preview" src="{{ asset($show->artworkPath()) }}" alt="{{ $show->title }} event artwork">
+        <form class="er-form" method="POST" action="{{ route('admin.events.artwork.update', $show) }}" enctype="multipart/form-data">
+          @csrf
+          @method('PATCH')
+          <div class="er-field">
+            <label for="event_image">Upload new artwork</label>
+            <input class="er-input" type="file" id="event_image" name="event_image" accept="image/jpeg,image/png,image/webp" required>
+            <p class="er-fieldHint">JPEG, PNG or WebP, up to {{ round(config('encore.event_images.max_size_kb') / 1024) }} MB.</p>
+            @error('event_image')<p class="er-fieldError">{{ $message }}</p>@enderror
+          </div>
+          <button class="er-btn er-btn--secondary" type="submit">Update artwork</button>
+        </form>
+      </section>
+
       <section class="er-card">
         <h2 class="er-adminTitle">Event dates</h2>
         <div class="er-adminList">

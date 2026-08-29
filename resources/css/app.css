@@ -868,6 +868,17 @@ html{ scroll-padding-top: 82px; }
   align-items:start;
 }
 
+.er-artworkManager__preview{
+  display:block;
+  width:100%;
+  aspect-ratio:16 / 9;
+  object-fit:cover;
+  border:1px solid var(--line);
+  border-radius:14px;
+  margin:0 0 1rem;
+  background:var(--brand);
+}
+
 .er-importTable .er-adminTable__head,
 .er-importTable .er-adminTable__row{
   grid-template-columns:1.2fr 1.2fr 0.6fr 0.6fr;

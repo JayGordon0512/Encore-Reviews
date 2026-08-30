@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -51,5 +52,16 @@ class ReviewInvitation extends Model
     public function eligibility(): BelongsTo
     {
         return $this->belongsTo(ReviewEligibility::class);
+    }
+
+    public function scopeAvailable(Builder $query): void
+    {
+        $query->whereNotNull('sent_at')
+            ->whereNull('used_at')
+            ->whereNull('revoked_at')
+            ->where(function (Builder $query): void {
+                $query->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            });
     }
 }

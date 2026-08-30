@@ -16,7 +16,14 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/organisers', [HomeController::class, 'organisers'])->name('organisers');
 Route::get('/shows', [ShowController::class, 'index'])->name('shows.index');
 Route::get('/shows/{show:slug}', [ShowController::class, 'show'])->name('shows.show');
+Route::get('/review/invitation', [ReviewSubmissionController::class, 'entry'])->name('review.invitation');
+Route::post('/review/invitation/exchange', [ReviewSubmissionController::class, 'exchange'])
+    ->middleware('throttle:10,1')
+    ->name('review.invitation.exchange');
 Route::get('/review/submit', [ReviewSubmissionController::class, 'show'])->name('review.submit');
+Route::post('/review/submit', [ReviewSubmissionController::class, 'store'])
+    ->middleware('throttle:10,1')
+    ->name('review.submit.store');
 
 Route::middleware('guest')->group(function (): void {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');

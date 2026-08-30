@@ -17,6 +17,13 @@ digests, token-free delivery evidence, replacement-on-failure behavior and
 consent-withdrawal revocation are implemented behind the disabled issuing flag.
 This evidence does not change the Proposed status or authorize activation.
 
+Implementation note (30 August 2026): new invitation emails place the bearer
+capability in the URL fragment. Browser code removes the fragment immediately,
+posts the token to a rate-limited exchange endpoint and binds the invitation to
+a rotated server session. The review form and its submission request contain no
+plaintext token. The legacy token-body API remains for bounded compatibility;
+new email journeys do not use it.
+
 ## Context
 
 The current TicketPal endpoint creates an Encore invitation immediately for a
@@ -97,6 +104,11 @@ least 128 bits of entropy. They are:
 Plaintext tokens never enter database records, provider responses, generic
 queue payloads, failed-job storage, ordinary logs or audit metadata.
 
+Email links must not place the capability in a query string or path. The token
+travels in a URL fragment, which browsers do not include in HTTP request
+targets, and is exchanged in a POST body for a rotated, server-side session.
+Request-body logging is prohibited on the exchange endpoint.
+
 The issuing worker creates the token/digest, commits issued state and a
 token-free notification delivery record, then uses the plaintext token only in
 memory for immediate post-commit dispatch. If dispatch fails after commit, a
@@ -141,8 +153,8 @@ error category where practical.
 - Invitation delivery can be retried without repeating TicketPal booking work.
 - Existing invitations require additive mapping/backfill or explicit legacy
   treatment; provenance is not invented.
-- Query-string token handling needs referrer/cache protections or a safer
-  fragment/POST/session exchange design.
+- The fragment/POST/session exchange requires JavaScript for emailed review
+  links and a functioning session store.
 - One review per eligibility is database-enforced; future attendee-level
   invitations require a separate decision.
 

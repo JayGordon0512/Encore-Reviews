@@ -28,8 +28,6 @@
           </div>
         @endif
 
-        <input type="hidden" name="invitation_token" value="{{ $invitationToken }}">
-
         <div class="er-formGrid">
           <div class="er-field">
             <label for="email">Email address</label>
@@ -138,7 +136,6 @@
       const formData = new FormData(form);
       const tags = collectTags(formData);
       const payload = {
-        invitation_token: formData.get('invitation_token'),
         email: formData.get('email'),
         display_name: formData.get('display_name') || undefined,
         rating: Number(formData.get('rating')),
@@ -151,11 +148,12 @@
       submitButton.textContent = 'Submitting...';
 
       try {
-        const response = await fetch('/api/reviews', {
+        const response = await fetch('{{ route('review.submit.store') }}', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
           },
           body: JSON.stringify(payload),
         });

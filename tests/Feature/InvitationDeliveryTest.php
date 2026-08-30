@@ -69,10 +69,11 @@ class InvitationDeliveryTest extends TestCase
         });
         $this->assertInstanceOf(ReviewInvitationMail::class, $message);
         $this->assertSame('Invitation Test Show', $message->showTitle);
-        $this->assertStringContainsString('/review/submit?token=', $message->reviewUrl);
+        $this->assertStringContainsString('/review/invitation#token=', $message->reviewUrl);
+        $this->assertStringNotContainsString('?', $message->reviewUrl);
         $this->assertStringContainsString('Share your review', $message->render());
 
-        $token = (string) Str::of($message->reviewUrl)->after('token=');
+        $token = rawurldecode((string) Str::of($message->reviewUrl)->after('#token='));
         $invitation = ReviewInvitation::firstOrFail();
         $this->assertSame('sent', $invitation->status);
         $this->assertNotNull($invitation->sent_at);
@@ -90,11 +91,10 @@ class InvitationDeliveryTest extends TestCase
         $this->assertStringNotContainsString('reviewer@example.test', $persistedOperations);
         $this->assertStringNotContainsString($token, $persistedOperations);
 
-        $this->get('/review/submit?token='.$token)
-            ->assertOk()
-            ->assertSee('Invitation Test Show');
-        $this->postJson('/api/reviews', [
-            'invitation_token' => $token,
+        $this->postJson('/review/invitation/exchange', ['invitation_token' => $token])
+            ->assertOk();
+        $this->get('/review/submit')->assertOk()->assertSee('Invitation Test Show');
+        $this->postJson(route('review.submit.store'), [
             'email' => 'reviewer@example.test',
             'rating' => 5,
             'would_recommend' => true,
@@ -129,8 +129,9 @@ class InvitationDeliveryTest extends TestCase
         $failedInvitation = ReviewInvitation::firstOrFail();
         $this->assertSame('revoked', $failedInvitation->status);
         $this->assertSame('delivery_failed', $failedInvitation->revocation_reason);
-        $failedToken = (string) Str::of($failingSender->reviewUrl)->after('token=');
-        $this->get('/review/submit?token='.$failedToken)->assertNotFound();
+        $failedToken = rawurldecode((string) Str::of($failingSender->reviewUrl)->after('#token='));
+        $this->postJson('/review/invitation/exchange', ['invitation_token' => $failedToken])
+            ->assertUnprocessable();
         $this->assertDatabaseHas('review_invitation_schedules', [
             'id' => $schedule->id,
             'status' => 'scheduled',

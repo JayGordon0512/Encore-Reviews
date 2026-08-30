@@ -91,6 +91,12 @@ php artisan queue:work database --queue=invitations --tries=1 --timeout=60 --sle
 The scheduler dispatches only schedule UUIDs. The queue and failed-job payloads
 must never contain reviewer email, display name or invitation tokens.
 
+Invitation emails use `/review/invitation#token=...`. URL fragments are not
+sent in HTTP request targets. The entry page removes the fragment immediately,
+posts the token to the rate-limited exchange endpoint and rotates the session
+before rendering `/review/submit`. Edge, application, APM and support tooling
+must not record request bodies for `/review/invitation/exchange`.
+
 Before enabling issuing, configure a secure current token digest key, retain an
 old key only during a controlled rotation overlap, and configure the same
 approved delivery provider used by TicketPal. Encore must use its own verified

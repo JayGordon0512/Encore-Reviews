@@ -169,7 +169,7 @@ final class IssueReviewInvitationService
                 'email' => $email,
                 'display_name' => $displayName,
                 'show_title' => $performance->show->title,
-                'review_url' => route('review.submit', ['token' => $token]),
+                'review_url' => route('review.invitation').'#token='.rawurlencode($token),
                 'expires_at' => $expiresAt,
             ];
         });

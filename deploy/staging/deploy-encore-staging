@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+
+set -Eeuo pipefail
+
+readonly DEPLOY_USER="encore-deploy"
+readonly REPOSITORY="/opt/encore-staging/repository"
+readonly ENV_FILE="/opt/encore-staging/shared/.env"
+readonly COMPOSE_FILE="${REPOSITORY}/deploy/staging/compose.yml"
+readonly LOCK_FILE="/run/lock/encore-staging-deploy.lock"
+
+if [[ "${EUID}" -ne 0 ]]; then
+    echo "This command must run as root." >&2
+    exit 1
+fi
+
+if [[ "$#" -ne 0 ]]; then
+    echo "This command does not accept arguments." >&2
+    exit 1
+fi
+
+for required_path in "${REPOSITORY}/.git" "${ENV_FILE}" "${COMPOSE_FILE}"; do
+    if [[ ! -e "${required_path}" ]]; then
+        echo "Required deployment path is missing: ${required_path}" >&2
+        exit 1
+    fi
+done
+
+exec 9>"${LOCK_FILE}"
+if ! flock --nonblock 9; then
+    echo "A staging deployment is already running." >&2
+    exit 1
+fi
+
+run_as_deploy() {
+    runuser -u "${DEPLOY_USER}" -- "$@"
+}
+
+if [[ -n "$(run_as_deploy git -C "${REPOSITORY}" status --porcelain)" ]]; then
+    echo "The staging repository has uncommitted changes; deployment stopped." >&2
+    exit 1
+fi
+
+run_as_deploy git -C "${REPOSITORY}" fetch origin main
+
+readonly REMOTE_REVISION="$(run_as_deploy git -C "${REPOSITORY}" rev-parse --verify origin/main^{commit})"
+readonly IMAGE_TAG="${REMOTE_REVISION:0:7}"
+
+run_as_deploy git -C "${REPOSITORY}" switch main
+run_as_deploy git -C "${REPOSITORY}" merge --ff-only "${REMOTE_REVISION}"
+
+export APP_IMAGE_TAG="${IMAGE_TAG}"
+
+compose() {
+    docker compose \
+        --env-file "${ENV_FILE}" \
+        --file "${COMPOSE_FILE}" \
+        "$@"
+}
+
+compose up --detach --build
+compose exec -T app php artisan migrate --force
+compose exec -T app php artisan optimize:clear
+
+for _ in {1..30}; do
+    if [[ "$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' encore-staging-web-1)" == "healthy" ]]; then
+        break
+    fi
+    sleep 2
+done
+
+if [[ "$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' encore-staging-web-1)" != "healthy" ]]; then
+    echo "The staging web container did not become healthy." >&2
+    compose ps
+    exit 1
+fi
+
+docker exec encore-staging-web-1 wget --quiet --output-document=- http://127.0.0.1/up \
+    | grep --quiet "Application up"
+
+readonly EXPECTED_APP_IMAGE="encore-staging/app:${IMAGE_TAG}"
+readonly EXPECTED_WEB_IMAGE="encore-staging/web:${IMAGE_TAG}"
+readonly ACTUAL_APP_IMAGE="$(docker inspect --format='{{.Config.Image}}' encore-staging-app-1)"
+readonly ACTUAL_WEB_IMAGE="$(docker inspect --format='{{.Config.Image}}' encore-staging-web-1)"
+
+if [[ "${ACTUAL_APP_IMAGE}" != "${EXPECTED_APP_IMAGE}" || "${ACTUAL_WEB_IMAGE}" != "${EXPECTED_WEB_IMAGE}" ]]; then
+    echo "The running staging images do not match revision ${IMAGE_TAG}." >&2
+    exit 1
+fi
+
+for container in encore-staging-app-1 encore-staging-worker-1 encore-staging-scheduler-1; do
+    if [[ "$(docker inspect --format='{{.State.Status}}' "${container}")" != "running" ]]; then
+        echo "Required container is not running: ${container}" >&2
+        compose ps
+        exit 1
+    fi
+done
+
+compose ps
+printf 'DEPLOYED_REVISION=%s\n' "${REMOTE_REVISION}"
+printf 'HEALTH=ok\n'

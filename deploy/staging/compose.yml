@@ -1,0 +1,47 @@
+name: encore-staging
+
+x-app: &app
+  image: encore-staging/app:${APP_IMAGE_TAG:-main}
+  env_file:
+    - ${STAGING_ENV_FILE:-/opt/encore-staging/shared/.env}
+  restart: unless-stopped
+  volumes:
+    - app-storage:/var/www/html/storage
+
+services:
+  app:
+    <<: *app
+    build:
+      context: ../..
+      dockerfile: deploy/staging/Dockerfile
+      target: app
+
+  web:
+    build:
+      context: ../..
+      dockerfile: deploy/staging/Dockerfile
+      target: web
+    image: encore-staging/web:${APP_IMAGE_TAG:-main}
+    restart: unless-stopped
+    ports:
+      - 127.0.0.1:8081:80
+    volumes:
+      - app-storage:/var/www/html/storage:ro
+    depends_on:
+      - app
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://127.0.0.1/up"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  worker:
+    <<: *app
+    command: php artisan queue:work database --queue=invitations --tries=1 --timeout=60 --sleep=3 --max-time=3600
+
+  scheduler:
+    <<: *app
+    command: php artisan schedule:work
+
+volumes:
+  app-storage:

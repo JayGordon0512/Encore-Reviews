@@ -1,0 +1,1 @@
+encore-deploy ALL=(root) NOPASSWD: /usr/local/sbin/deploy-encore-staging

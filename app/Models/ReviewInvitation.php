@@ -18,6 +18,7 @@ class ReviewInvitation extends Model
 
     protected $fillable = [
         'eligibility_id',
+        'audience_attendance_id',
         'performance_id',
         'email_hash',
         'token_hash',
@@ -52,6 +53,11 @@ class ReviewInvitation extends Model
     public function eligibility(): BelongsTo
     {
         return $this->belongsTo(ReviewEligibility::class);
+    }
+
+    public function audienceAttendance(): BelongsTo
+    {
+        return $this->belongsTo(AudienceAttendance::class);
     }
 
     public function scopeAvailable(Builder $query): void

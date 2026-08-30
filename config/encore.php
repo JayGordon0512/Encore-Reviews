@@ -38,6 +38,8 @@ return [
         'contact_fingerprint_key' => env('ENCORE_CONTACT_FINGERPRINT_KEY'),
         'contact_fingerprint_version' => (int) env('ENCORE_CONTACT_FINGERPRINT_VERSION', 1),
         'max_rows' => (int) env('ENCORE_AUDIENCE_IMPORT_MAX_ROWS', 1000),
+        'invitation_issuing_enabled' => (bool) env('ENCORE_ORGANISER_INVITATION_ISSUING_ENABLED', false),
+        'invitation_delay_hours' => (int) env('ENCORE_ORGANISER_INVITATION_DELAY_HOURS', 2),
     ],
 
     'event_images' => [

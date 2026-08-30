@@ -14,7 +14,8 @@ class ReviewInvitationSchedule extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
-        'eligibility_id', 'correlation_id', 'scheduled_for', 'status', 'attempts',
+        'eligibility_id', 'audience_attendance_id', 'source', 'correlation_id',
+        'scheduled_for', 'status', 'attempts',
         'claimed_at', 'issued_at', 'dead_lettered_at', 'suppression_reason',
         'last_error_code', 'cancelled_at',
     ];

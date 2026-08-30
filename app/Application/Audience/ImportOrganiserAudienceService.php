@@ -6,6 +6,7 @@ use App\Models\AudienceAttendance;
 use App\Models\AudienceImport;
 use App\Models\Performance;
 use App\Models\ProtectedReviewerContact;
+use App\Models\ReviewInvitationSchedule;
 use App\Models\Show;
 use App\Models\User;
 use App\Services\AuditLogger;
@@ -97,6 +98,23 @@ final class ImportOrganiserAudienceService
                 );
 
                 if ($attendance->wasRecentlyCreated) {
+                    $scheduledFor = ($performance->ends_at ?? $performance->starts_at ?? now())
+                        ->copy()
+                        ->addHours((int) config('encore.audience_imports.invitation_delay_hours'));
+                    if ($scheduledFor->isPast()) {
+                        $scheduledFor = now();
+                    }
+                    $issuingEnabled = (bool) config('encore.audience_imports.invitation_issuing_enabled');
+                    ReviewInvitationSchedule::create([
+                        'audience_attendance_id' => $attendance->id,
+                        'source' => 'organiser_csv',
+                        'correlation_id' => $correlationId,
+                        'scheduled_for' => $scheduledFor,
+                        'status' => $issuingEnabled ? 'scheduled' : 'suppressed',
+                        'suppression_reason' => $issuingEnabled
+                            ? null
+                            : 'organiser_invitation_issuing_disabled',
+                    ]);
                     $imported++;
                 } else {
                     $skipped++;

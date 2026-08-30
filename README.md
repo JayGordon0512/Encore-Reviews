@@ -40,6 +40,7 @@ All pull requests must follow [CONTRIBUTING.md](CONTRIBUTING.md).
 - Feature tests covering key API and public page functionality
 - Organisation-scoped customer dashboard with review moderation
 - Encore super-admin area for organisations, users, show ownership, and support views
+- Independent organiser events, encrypted CSV attendance imports, and separately gated review invitation scheduling
 
 ## Quick start
 
@@ -118,8 +119,9 @@ php artisan test
 
 ## Next steps
 
-- Wire TicketPal event sync into performance/invitation creation
-- Add search/filter for public shows
+- Operate and verify the staging scheduler and `invitations` queue worker
+- Run a controlled end-to-end organiser CSV invitation and review submission
+- Add invitation delivery status and recovery visibility for organisers
 
 ## License
 

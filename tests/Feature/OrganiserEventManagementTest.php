@@ -2,16 +2,22 @@
 
 namespace Tests\Feature;
 
+use App\Application\Invitations\IssueReviewInvitationService;
+use App\Jobs\IssueReviewInvitation;
 use App\Models\AudienceImport;
 use App\Models\AuditLog;
 use App\Models\Organisation;
 use App\Models\Performance;
 use App\Models\ProtectedReviewerContact;
+use App\Models\ReviewInvitation;
+use App\Models\ReviewInvitationSchedule;
 use App\Models\Show;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -27,6 +33,8 @@ class OrganiserEventManagementTest extends TestCase
             'encore.audience_imports.contact_fingerprint_key' => 'organiser-import-test-key',
             'encore.audience_imports.contact_fingerprint_version' => 1,
             'encore.audience_imports.max_rows' => 1000,
+            'encore.audience_imports.invitation_issuing_enabled' => false,
+            'encore.audience_imports.invitation_delay_hours' => 2,
             'encore.event_images.disk' => 'public',
             'encore.event_images.max_size_kb' => 5120,
         ]);
@@ -198,6 +206,15 @@ class OrganiserEventManagementTest extends TestCase
         $this->assertSame('completed', $audienceImport->status);
         $this->assertDatabaseCount('protected_reviewer_contacts', 2);
         $this->assertDatabaseCount('audience_attendances', 2);
+        $this->assertDatabaseCount('review_invitation_schedules', 2);
+        $this->assertSame(
+            ['suppressed'],
+            ReviewInvitationSchedule::query()->distinct()->pluck('status')->all(),
+        );
+        $this->assertSame(
+            ['organiser_csv'],
+            ReviewInvitationSchedule::query()->distinct()->pluck('source')->all(),
+        );
         $this->assertDatabaseHas('audience_attendances', [
             'organisation_id' => $organisation->id,
             'show_id' => $show->id,
@@ -218,6 +235,57 @@ class OrganiserEventManagementTest extends TestCase
         $this->assertSame(2, $audit->after_state['rows_imported']);
         $this->assertArrayNotHasKey('email', $audit->after_state);
         $this->assertStringNotContainsString('alice@example.com', json_encode($audit->after_state));
+    }
+
+    public function test_organiser_attendance_can_issue_an_invitation_while_provider_issuing_is_disabled(): void
+    {
+        [, $user, $show, $performance] = $this->manualEvent('Independent Invitation Event');
+        $performance->update([
+            'starts_at' => now()->subHours(4),
+            'ends_at' => now()->subHours(2),
+            'status' => 'completed',
+        ]);
+        config([
+            'app.url' => 'https://staging.encorereviews.co.uk',
+            'encore.provider_v2.invitation_issuing_enabled' => false,
+            'encore.audience_imports.invitation_issuing_enabled' => true,
+            'encore.invitations.token_digest_key' => 'manual-invitation-test-key',
+        ]);
+        Mail::fake();
+        Queue::fake();
+
+        $this->actingAs($user)->post(route('admin.audience-imports.store', $show), [
+            'performance_id' => $performance->id,
+            'customers_csv' => UploadedFile::fake()->createWithContent(
+                'customers.csv',
+                "name,email\nAlex Audience,alex@example.com",
+            ),
+            'attendance_confirmed' => '1',
+        ])->assertRedirect();
+
+        $schedule = ReviewInvitationSchedule::sole();
+        $this->assertSame('organiser_csv', $schedule->source);
+        $this->assertSame('scheduled', $schedule->status);
+        $this->assertNull($schedule->eligibility_id);
+        $this->assertNotNull($schedule->audience_attendance_id);
+
+        $this->artisan('encore:invitations:dispatch-due')->assertSuccessful();
+        Queue::assertPushed(IssueReviewInvitation::class, fn (IssueReviewInvitation $job): bool => $job->scheduleId === $schedule->id);
+
+        (new IssueReviewInvitation($schedule->id))
+            ->handle($this->app->make(IssueReviewInvitationService::class));
+
+        Mail::assertSentCount(1);
+        $invitation = ReviewInvitation::sole();
+        $this->assertNull($invitation->eligibility_id);
+        $this->assertSame($schedule->audience_attendance_id, $invitation->audience_attendance_id);
+        $this->assertSame('organiser_csv', $invitation->provider_source);
+        $this->assertSame('organiser_confirmed', $invitation->attendance_state);
+        $this->assertSame('sent', $invitation->status);
+        $this->assertDatabaseHas('review_invitation_schedules', [
+            'id' => $schedule->id,
+            'status' => 'issued',
+        ]);
     }
 
     public function test_import_requires_attendance_confirmation_and_email_header(): void

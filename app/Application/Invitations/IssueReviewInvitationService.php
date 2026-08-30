@@ -4,6 +4,7 @@ namespace App\Application\Invitations;
 
 use App\Contracts\ReviewInvitationSender;
 use App\Domain\Invitations\InvitationToken;
+use App\Models\AudienceAttendance;
 use App\Models\AuditLog;
 use App\Models\IntegrationProvider;
 use App\Models\Organisation;
@@ -28,10 +29,6 @@ final class IssueReviewInvitationService
 
     public function issue(string $scheduleId): void
     {
-        if (! config('encore.provider_v2.invitation_issuing_enabled')) {
-            return;
-        }
-
         $delivery = $this->claimAndCreate($scheduleId);
         if ($delivery === null) {
             return;
@@ -66,6 +63,9 @@ final class IssueReviewInvitationService
             if (! $schedule || in_array($schedule->status, ['issued', 'cancelled', 'suppressed', 'dead_lettered'], true)) {
                 return null;
             }
+            if (! $this->sourceEnabled($schedule->source)) {
+                return null;
+            }
 
             $staleBefore = now()->subMinutes((int) config('encore.invitations.claim_timeout_minutes'));
             if ($schedule->status === 'processing' && $schedule->claimed_at?->isAfter($staleBefore)) {
@@ -80,16 +80,16 @@ final class IssueReviewInvitationService
                 return null;
             }
 
-            $eligibility = ReviewEligibility::query()->lockForUpdate()->find($schedule->eligibility_id);
-            if (! $eligibility || $eligibility->status !== 'eligible') {
+            $authority = $this->resolveAuthority($schedule, true);
+            if ($authority === null) {
                 $this->suppress($schedule, 'eligibility_unavailable');
 
                 return null;
             }
 
-            $contact = ProtectedReviewerContact::find($eligibility->contact_id);
-            $organisation = Organisation::find($eligibility->organisation_id);
-            $performance = Performance::query()->with('show')->find($eligibility->performance_id);
+            $contact = ProtectedReviewerContact::find($authority['contact_id']);
+            $organisation = Organisation::find($authority['organisation_id']);
+            $performance = Performance::query()->with('show')->find($authority['performance_id']);
             if (! $contact || $contact->status !== 'active') {
                 $this->suppress($schedule, 'contact_suppressed');
 
@@ -106,32 +106,37 @@ final class IssueReviewInvitationService
 
                 return null;
             }
-            if (ReviewInvitation::query()->where('eligibility_id', $eligibility->id)->whereNotNull('used_at')->exists()) {
+            if (ReviewInvitation::query()
+                ->where($authority['invitation_key'], $authority['authority_id'])
+                ->whereNotNull('used_at')->exists()) {
                 $this->suppress($schedule, 'eligibility_redeemed');
 
                 return null;
             }
 
-            $this->revokeIncompleteInvitation($eligibility->id);
+            $this->revokeIncompleteInvitation($authority['invitation_key'], $authority['authority_id']);
 
             $token = $this->tokens->create();
             $expiresAt = now()->addDays((int) config('encore.invitations.expiry_days'));
             $email = Crypt::decryptString($contact->email_ciphertext);
             $displayName = Crypt::decryptString($contact->display_name_ciphertext);
-            $provider = IntegrationProvider::find($eligibility->provider_id);
+            $provider = $authority['provider_id']
+                ? IntegrationProvider::find($authority['provider_id'])
+                : null;
             $correlationId = $schedule->correlation_id ?: (string) Str::uuid();
             $invitation = ReviewInvitation::create([
-                'eligibility_id' => $eligibility->id,
-                'performance_id' => $eligibility->performance_id,
+                'eligibility_id' => $authority['eligibility_id'],
+                'audience_attendance_id' => $authority['audience_attendance_id'],
+                'performance_id' => $authority['performance_id'],
                 'email_hash' => hash('sha256', Str::lower(trim($email))),
                 'token_hash' => $this->tokens->digest($token),
                 'token_version' => InvitationToken::VERSION,
                 'status' => 'issued',
                 'expires_at' => $expiresAt,
-                'provider_source' => $provider?->slug,
-                'provider_booking_id' => $eligibility->provider_booking_id,
-                'attendance_state' => 'eligible',
-                'meta' => ['purpose' => $eligibility->purpose],
+                'provider_source' => $provider?->slug ?? $schedule->source,
+                'provider_booking_id' => $authority['provider_booking_id'],
+                'attendance_state' => $authority['attendance_state'],
+                'meta' => ['purpose' => $authority['purpose'], 'authority_source' => $schedule->source],
             ]);
             ReviewInvitationDelivery::create([
                 'invitation_id' => $invitation->id,
@@ -153,15 +158,19 @@ final class IssueReviewInvitationService
                 'event_type' => 'ReviewInvitationIssued',
                 'aggregate_type' => 'ReviewInvitation',
                 'aggregate_id' => $invitation->id,
-                'organisation_id' => $eligibility->organisation_id,
-                'provider_id' => $eligibility->provider_id,
+                'organisation_id' => $authority['organisation_id'],
+                'provider_id' => $authority['provider_id'],
                 'payload_version' => 1,
-                'payload' => ['invitation_id' => $invitation->id, 'eligibility_id' => $eligibility->id],
+                'payload' => array_filter([
+                    'invitation_id' => $invitation->id,
+                    'eligibility_id' => $authority['eligibility_id'],
+                    'audience_attendance_id' => $authority['audience_attendance_id'],
+                ]),
                 'correlation_id' => $correlationId,
                 'occurred_at' => now(),
                 'available_at' => now(),
             ]);
-            $this->audit($eligibility, 'review_invitation.issued', $invitation->id, $correlationId);
+            $this->audit($authority['organisation_id'], 'review_invitation.issued', $invitation->id, $correlationId);
 
             return [
                 'schedule_id' => $schedule->id,
@@ -180,17 +189,16 @@ final class IssueReviewInvitationService
         return DB::transaction(function () use ($scheduleId, $invitationId): bool {
             $schedule = ReviewInvitationSchedule::query()->lockForUpdate()->find($scheduleId);
             $invitation = ReviewInvitation::query()->lockForUpdate()->find($invitationId);
-            $eligibility = $schedule
-                ? ReviewEligibility::query()->lockForUpdate()->find($schedule->eligibility_id)
-                : null;
-            $contact = $eligibility ? ProtectedReviewerContact::find($eligibility->contact_id) : null;
-            $organisation = $eligibility ? Organisation::find($eligibility->organisation_id) : null;
-            $performance = $eligibility
-                ? Performance::query()->with('show')->find($eligibility->performance_id)
+            $authority = $schedule ? $this->resolveAuthority($schedule, true) : null;
+            $contact = $authority ? ProtectedReviewerContact::find($authority['contact_id']) : null;
+            $organisation = $authority ? Organisation::find($authority['organisation_id']) : null;
+            $performance = $authority
+                ? Performance::query()->with('show')->find($authority['performance_id'])
                 : null;
 
             if ($schedule?->status === 'processing' && $invitation?->revoked_at === null
-                && $eligibility?->status === 'eligible' && $contact?->status === 'active'
+                && $this->sourceEnabled($schedule->source) && $authority
+                && $contact?->status === 'active'
                 && $organisation?->is_active && $performance
                 && ! in_array($performance->status, ['cancelled', 'archived', 'deleted'], true)
                 && $performance->show && ! $performance->show->reviews_locked) {
@@ -231,8 +239,10 @@ final class IssueReviewInvitationService
                 'status' => 'issued', 'issued_at' => now(), 'claimed_at' => null,
                 'last_error_code' => null,
             ])->save();
-            $eligibility = ReviewEligibility::findOrFail($schedule->eligibility_id);
-            $this->audit($eligibility, 'review_invitation.sent', $invitationId, $schedule->correlation_id);
+            $authority = $this->resolveAuthority($schedule);
+            if ($authority) {
+                $this->audit($authority['organisation_id'], 'review_invitation.sent', $invitationId, $schedule->correlation_id);
+            }
         });
     }
 
@@ -262,10 +272,10 @@ final class IssueReviewInvitationService
         });
     }
 
-    private function revokeIncompleteInvitation(string $eligibilityId): void
+    private function revokeIncompleteInvitation(string $authorityKey, string $authorityId): void
     {
         $invitations = ReviewInvitation::query()
-            ->where('eligibility_id', $eligibilityId)
+            ->where($authorityKey, $authorityId)
             ->whereNull('used_at')
             ->whereNull('revoked_at')
             ->lockForUpdate()
@@ -290,10 +300,76 @@ final class IssueReviewInvitationService
         ])->save();
     }
 
-    private function audit(ReviewEligibility $eligibility, string $action, string $entityId, string $correlationId): void
+    /** @return array<string, mixed>|null */
+    private function resolveAuthority(ReviewInvitationSchedule $schedule, bool $lock = false): ?array
+    {
+        if ($schedule->source === 'provider_v2' && $schedule->eligibility_id) {
+            $query = ReviewEligibility::query();
+            if ($lock) {
+                $query->lockForUpdate();
+            }
+            $eligibility = $query->find($schedule->eligibility_id);
+            if (! $eligibility || $eligibility->status !== 'eligible') {
+                return null;
+            }
+
+            return [
+                'authority_id' => $eligibility->id,
+                'invitation_key' => 'eligibility_id',
+                'eligibility_id' => $eligibility->id,
+                'audience_attendance_id' => null,
+                'organisation_id' => $eligibility->organisation_id,
+                'performance_id' => $eligibility->performance_id,
+                'contact_id' => $eligibility->contact_id,
+                'provider_id' => $eligibility->provider_id,
+                'provider_booking_id' => $eligibility->provider_booking_id,
+                'attendance_state' => 'eligible',
+                'purpose' => $eligibility->purpose,
+            ];
+        }
+
+        if ($schedule->source === 'organiser_csv' && $schedule->audience_attendance_id) {
+            $query = AudienceAttendance::query();
+            if ($lock) {
+                $query->lockForUpdate();
+            }
+            $attendance = $query->find($schedule->audience_attendance_id);
+            if (! $attendance || $attendance->status !== 'active'
+                || $attendance->attendance_state !== 'organiser_confirmed') {
+                return null;
+            }
+
+            return [
+                'authority_id' => $attendance->id,
+                'invitation_key' => 'audience_attendance_id',
+                'eligibility_id' => null,
+                'audience_attendance_id' => $attendance->id,
+                'organisation_id' => $attendance->organisation_id,
+                'performance_id' => $attendance->performance_id,
+                'contact_id' => $attendance->contact_id,
+                'provider_id' => null,
+                'provider_booking_id' => null,
+                'attendance_state' => $attendance->attendance_state,
+                'purpose' => 'encore_review',
+            ];
+        }
+
+        return null;
+    }
+
+    private function sourceEnabled(string $source): bool
+    {
+        return match ($source) {
+            'provider_v2' => (bool) config('encore.provider_v2.invitation_issuing_enabled'),
+            'organiser_csv' => (bool) config('encore.audience_imports.invitation_issuing_enabled'),
+            default => false,
+        };
+    }
+
+    private function audit(string $organisationId, string $action, string $entityId, string $correlationId): void
     {
         AuditLog::create([
-            'organisation_id' => $eligibility->organisation_id,
+            'organisation_id' => $organisationId,
             'user_id' => null,
             'action' => $action,
             'entity_type' => 'review_invitation',

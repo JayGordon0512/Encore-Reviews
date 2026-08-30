@@ -101,6 +101,7 @@ final class ProviderV2ReviewEligibilityService
                 ->addHours((int) config('encore.provider_v2.invitation_delay_hours'));
             ReviewInvitationSchedule::create([
                 'eligibility_id' => $eligibility->id,
+                'source' => 'provider_v2',
                 'correlation_id' => $correlationId,
                 'scheduled_for' => $scheduleAt,
                 'status' => config('encore.provider_v2.invitation_issuing_enabled') ? 'scheduled' : 'suppressed',

@@ -14,7 +14,11 @@ class DispatchDueReviewInvitations extends Command
 
     public function handle(): int
     {
-        if (! config('encore.provider_v2.invitation_issuing_enabled')) {
+        $enabledSources = array_keys(array_filter([
+            'provider_v2' => (bool) config('encore.provider_v2.invitation_issuing_enabled'),
+            'organiser_csv' => (bool) config('encore.audience_imports.invitation_issuing_enabled'),
+        ]));
+        if ($enabledSources === []) {
             $this->components->info('Invitation issuing is disabled; no jobs were dispatched.');
 
             return self::SUCCESS;
@@ -23,6 +27,7 @@ class DispatchDueReviewInvitations extends Command
         $staleBefore = now()->subMinutes((int) config('encore.invitations.claim_timeout_minutes'));
         $limit = max(1, min((int) $this->option('limit'), 1000));
         $scheduleIds = ReviewInvitationSchedule::query()
+            ->whereIn('source', $enabledSources)
             ->where(function ($query) use ($staleBefore): void {
                 $query->where(function ($query): void {
                     $query->where('status', 'scheduled')->where('scheduled_for', '<=', now());

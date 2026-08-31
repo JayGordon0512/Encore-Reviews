@@ -115,7 +115,7 @@ Inspect due-work dispatch without exposing contact data:
 
 ```bash
 php artisan encore:invitations:dispatch-due --limit=100
-php artisan queue:monitor invitations:100
+php artisan queue:monitor database:invitations --max=100
 ```
 
 Customers imported while organiser sending is disabled are held rather than

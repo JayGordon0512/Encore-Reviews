@@ -4,6 +4,12 @@ x-app: &app
   image: encore-staging/app:${APP_IMAGE_TAG:-main}
   env_file:
     - ${STAGING_ENV_FILE:-/opt/encore-staging/shared/.env}
+  environment:
+    DB_HOST: database
+    DB_PORT: 5432
+    DB_DATABASE: ${POSTGRES_DB:-encore}
+    DB_USERNAME: ${POSTGRES_USER:-encore}
+    DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
   restart: unless-stopped
   volumes:
     - app-storage:/var/www/html/storage

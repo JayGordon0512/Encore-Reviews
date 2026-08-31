@@ -22,6 +22,8 @@ class StagingDeploymentTest extends TestCase
         $this->assertStringContainsString('127.0.0.1:8081:80', $configuration);
         $this->assertStringContainsString('image: postgres:17-alpine', $configuration);
         $this->assertStringContainsString('database-data:/var/lib/postgresql/data', $configuration);
+        $this->assertStringContainsString('DB_HOST: database', $configuration);
+        $this->assertStringContainsString('DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}', $configuration);
         $this->assertStringContainsString('php artisan queue:work database --queue=invitations', $configuration);
         $this->assertStringContainsString('php artisan schedule:work', $configuration);
         $this->assertStringNotContainsString('ports:'.PHP_EOL.'      - 5432', $configuration);

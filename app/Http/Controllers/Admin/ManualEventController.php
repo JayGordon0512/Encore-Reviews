@@ -136,11 +136,36 @@ class ManualEventController extends Controller
     {
         $this->authorizeOwnedManualEvent($request, $show);
         $show->load([
-            'performances' => fn ($query) => $query->with('venue')->withCount('audienceAttendances')->orderBy('starts_at'),
+            'performances' => fn ($query) => $query->with('venue')
+                ->withCount([
+                    'audienceAttendances',
+                    'invitationSchedules as invitation_scheduled_count' => fn ($query) => $query->whereIn('review_invitation_schedules.status', ['scheduled', 'processing']),
+                    'invitationSchedules as invitation_issued_count' => fn ($query) => $query->where('review_invitation_schedules.status', 'issued'),
+                    'invitationSchedules as invitation_held_count' => fn ($query) => $query
+                        ->where('review_invitation_schedules.status', 'suppressed')
+                        ->where('review_invitation_schedules.suppression_reason', 'organiser_invitation_issuing_disabled'),
+                    'invitationSchedules as invitation_attention_count' => fn ($query) => $query->where('review_invitation_schedules.status', 'dead_lettered'),
+                    'invitationSchedules as invitation_stopped_count' => fn ($query) => $query
+                        ->where(function ($query): void {
+                            $query->where('review_invitation_schedules.status', 'cancelled')
+                                ->orWhere(function ($query): void {
+                                    $query->where('review_invitation_schedules.status', 'suppressed')
+                                        ->where('review_invitation_schedules.suppression_reason', '!=', 'organiser_invitation_issuing_disabled');
+                                });
+                        }),
+                ])
+                ->withMin([
+                    'invitationSchedules as next_invitation_at' => fn ($query) => $query->where('review_invitation_schedules.status', 'scheduled'),
+                ], 'scheduled_for')
+                ->orderBy('starts_at'),
             'audienceImports' => fn ($query) => $query->with('performance')->latest()->limit(10),
         ])->loadCount('audienceAttendances');
 
-        return view('admin.events.show', compact('show'));
+        return view('admin.events.show', [
+            'show' => $show,
+            'invitationIssuingEnabled' => (bool) config('encore.audience_imports.invitation_issuing_enabled'),
+            'invitationDelayHours' => (int) config('encore.audience_imports.invitation_delay_hours'),
+        ]);
     }
 
     public function updateArtwork(Request $request, Show $show): RedirectResponse

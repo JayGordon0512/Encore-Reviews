@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ReviewInvitationSchedule extends Model
 {
@@ -27,5 +28,10 @@ class ReviewInvitationSchedule extends Model
             'claimed_at' => 'datetime', 'issued_at' => 'datetime',
             'dead_lettered_at' => 'datetime', 'cancelled_at' => 'datetime',
         ];
+    }
+
+    public function audienceAttendance(): BelongsTo
+    {
+        return $this->belongsTo(AudienceAttendance::class);
     }
 }

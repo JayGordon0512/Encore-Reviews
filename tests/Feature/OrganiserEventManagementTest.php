@@ -223,6 +223,12 @@ class OrganiserEventManagementTest extends TestCase
             'attendance_state' => 'organiser_confirmed',
         ]);
 
+        $managementPage = $this->actingAs($user)->get(route('admin.events.show', $show));
+        $managementPage->assertOk();
+        $managementPage->assertSee('Automatic review invitations are paused.');
+        $managementPage->assertSeeText('2 held');
+        $managementPage->assertSee('Invitations will be held while automatic sending is paused.');
+
         $decryptedEmails = ProtectedReviewerContact::all()
             ->map(fn (ProtectedReviewerContact $contact): string => Crypt::decryptString($contact->email_ciphertext))
             ->sort()->values()->all();
@@ -285,6 +291,59 @@ class OrganiserEventManagementTest extends TestCase
         $this->assertDatabaseHas('review_invitation_schedules', [
             'id' => $schedule->id,
             'status' => 'issued',
+        ]);
+
+        $managementPage = $this->actingAs($user)->get(route('admin.events.show', $show));
+        $managementPage->assertOk();
+        $managementPage->assertSee('Automatic review invitations are active.');
+        $managementPage->assertSeeText('1 sent');
+        $managementPage->assertDontSee('alex@example.com');
+    }
+
+    public function test_held_organiser_invitations_require_an_explicit_audited_release(): void
+    {
+        [$organisation, $user, $show, $performance] = $this->manualEvent('Held Invitation Event');
+        $performance->update([
+            'starts_at' => now()->subHours(4),
+            'ends_at' => now()->subHours(2),
+            'status' => 'completed',
+        ]);
+
+        $this->actingAs($user)->post(route('admin.audience-imports.store', $show), [
+            'performance_id' => $performance->id,
+            'customers_csv' => UploadedFile::fake()->createWithContent(
+                'customers.csv',
+                "name,email\nHeld Audience,held@example.com",
+            ),
+            'attendance_confirmed' => '1',
+        ])->assertRedirect();
+
+        $schedule = ReviewInvitationSchedule::sole();
+        $this->assertSame('suppressed', $schedule->status);
+
+        $this->artisan('encore:invitations:release-held-organiser')
+            ->expectsOutputToContain('Dry run: 1 held organiser invitation(s)')
+            ->assertSuccessful();
+        $this->assertSame('suppressed', $schedule->fresh()->status);
+
+        $this->artisan('encore:invitations:release-held-organiser', ['--commit' => true])
+            ->assertFailed();
+        $this->assertSame('suppressed', $schedule->fresh()->status);
+
+        config(['encore.audience_imports.invitation_issuing_enabled' => true]);
+        $this->artisan('encore:invitations:release-held-organiser', ['--commit' => true])
+            ->expectsOutputToContain('1 held organiser invitation(s) released')
+            ->assertSuccessful();
+
+        $schedule->refresh();
+        $this->assertSame('scheduled', $schedule->status);
+        $this->assertNull($schedule->suppression_reason);
+        $this->assertTrue($schedule->scheduled_for->isToday());
+        $this->assertDatabaseHas('audit_logs', [
+            'organisation_id' => $organisation->id,
+            'user_id' => null,
+            'action' => 'review_invitation.schedule_released',
+            'entity_id' => $schedule->id,
         ]);
     }
 

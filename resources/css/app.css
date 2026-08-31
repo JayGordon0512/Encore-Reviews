@@ -1167,6 +1167,34 @@ textarea.er-input{
   font-size: 1.4rem;
 }
 
+.er-invitationMetrics{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+  gap:6px;
+  max-width:330px;
+}
+
+.er-invitationMetrics span{
+  display:inline-flex;
+  gap:4px;
+  padding:5px 8px;
+  border-radius:999px;
+  background:var(--soft);
+  color:var(--muted);
+  font-size:0.78rem;
+  white-space:nowrap;
+}
+
+.er-invitationMetrics strong{
+  color:var(--ink);
+}
+
+.er-invitationMetrics .er-invitationMetrics__attention{
+  background:#fff1f0;
+  color:var(--danger);
+}
+
 .er-statusPill{
   display:inline-flex;
   align-items:center;

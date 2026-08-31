@@ -118,6 +118,26 @@ php artisan encore:invitations:dispatch-due --limit=100
 php artisan queue:monitor invitations:100
 ```
 
+Customers imported while organiser sending is disabled are held rather than
+silently queued. Before enabling the organiser gate, inspect the release batch;
+the command is a dry run unless `--commit` is supplied:
+
+```bash
+php artisan encore:invitations:release-held-organiser --limit=100
+```
+
+After `ENCORE_ORGANISER_INVITATION_ISSUING_ENABLED=true` has been applied to the
+web, scheduler and worker runtimes, release one controlled batch:
+
+```bash
+php artisan encore:invitations:release-held-organiser --limit=100 --commit
+```
+
+Every released schedule receives a new correlation ID and an immutable audit
+record. Past-due schedules become due immediately, but dispatch remains bounded
+by the scheduler limit. The issuing service rechecks organisation, performance,
+show, attendance and contact authority immediately before delivery.
+
 Activation requires monitoring for worker health, oldest scheduled work, queue
 depth, `review_invitation_schedules.status = dead_lettered`, and
 `failed_jobs`. Resolve the mail or configuration cause before rescheduling a

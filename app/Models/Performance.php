@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Performance extends Model
 {
@@ -62,5 +63,15 @@ class Performance extends Model
     public function audienceAttendances(): HasMany
     {
         return $this->hasMany(AudienceAttendance::class);
+    }
+
+    public function invitationSchedules(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            ReviewInvitationSchedule::class,
+            AudienceAttendance::class,
+            'performance_id',
+            'audience_attendance_id',
+        );
     }
 }

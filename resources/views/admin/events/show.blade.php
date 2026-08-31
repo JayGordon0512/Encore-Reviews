@@ -24,6 +24,16 @@
       <div class="er-notice er-notice--error" role="alert">Please correct the customer import.</div>
     @endif
 
+    @if($invitationIssuingEnabled)
+      <div class="er-notice er-notice--success" role="status">
+        Automatic review invitations are active. Emails are scheduled {{ $invitationDelayHours }} {{ Str::plural('hour', $invitationDelayHours) }} after each performance ends.
+      </div>
+    @else
+      <div class="er-notice" role="status">
+        <strong>Automatic review invitations are paused.</strong> New imports are securely held and no review emails are sent while paused.
+      </div>
+    @endif
+
     <div class="er-adminGrid er-eventManagementGrid">
       <section class="er-card er-artworkManager">
         <h2 class="er-adminTitle">Event artwork</h2>
@@ -49,10 +59,17 @@
               <div>
                 <h3>{{ $performance->starts_at?->format('D j M Y, H:i') ?? 'Date to be confirmed' }}</h3>
                 <p>{{ $performance->venue?->name ?? 'Venue to be confirmed' }}@if($performance->venue?->city) · {{ $performance->venue->city }} @endif</p>
+                @if($performance->next_invitation_at)
+                  <p>Next email run: {{ \Illuminate\Support\Carbon::parse($performance->next_invitation_at)->format('D j M Y, H:i') }}</p>
+                @endif
               </div>
-              <div class="er-adminMetric">
-                <strong>{{ $performance->audience_attendances_count }}</strong>
-                <span>customers</span>
+              <div class="er-invitationMetrics" aria-label="Invitation status">
+                <span><strong>{{ $performance->audience_attendances_count }}</strong> customers</span>
+                @if($performance->invitation_scheduled_count)<span><strong>{{ $performance->invitation_scheduled_count }}</strong> scheduled</span>@endif
+                @if($performance->invitation_issued_count)<span><strong>{{ $performance->invitation_issued_count }}</strong> sent</span>@endif
+                @if($performance->invitation_held_count)<span><strong>{{ $performance->invitation_held_count }}</strong> held</span>@endif
+                @if($performance->invitation_attention_count)<span class="er-invitationMetrics__attention"><strong>{{ $performance->invitation_attention_count }}</strong> need attention</span>@endif
+                @if($performance->invitation_stopped_count)<span><strong>{{ $performance->invitation_stopped_count }}</strong> stopped</span>@endif
               </div>
             </article>
           @endforeach
@@ -89,7 +106,14 @@
           </label>
           @error('attendance_confirmed')<p class="er-fieldError">{{ $message }}</p>@enderror
 
-          <div class="er-notice">Imported customer details are encrypted. This import does not send review invitations automatically.</div>
+          <div class="er-notice">
+            Imported customer details are encrypted.
+            @if($invitationIssuingEnabled)
+              Each eligible customer will be scheduled for a single review invitation after the selected performance.
+            @else
+              Invitations will be held while automatic sending is paused.
+            @endif
+          </div>
           <button class="er-btn" type="submit">Import customers</button>
         </form>
       </section>

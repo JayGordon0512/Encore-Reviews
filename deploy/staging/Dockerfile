@@ -48,7 +48,8 @@ RUN --mount=type=cache,target=/tmp/composer-cache \
         --no-interaction \
         --no-progress \
         --no-scripts \
-        --prefer-dist
+        --prefer-source \
+    && find vendor -type d -name .git -prune -exec rm -rf '{}' +
 
 COPY . .
 COPY --from=frontend /src/public/build ./public/build

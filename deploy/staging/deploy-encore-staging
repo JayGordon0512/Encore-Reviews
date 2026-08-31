@@ -87,7 +87,7 @@ if [[ "${ACTUAL_APP_IMAGE}" != "${EXPECTED_APP_IMAGE}" || "${ACTUAL_WEB_IMAGE}" 
     exit 1
 fi
 
-for container in encore-staging-app-1 encore-staging-worker-1 encore-staging-scheduler-1; do
+for container in encore-staging-database-1 encore-staging-app-1 encore-staging-worker-1 encore-staging-scheduler-1; do
     if [[ "$(docker inspect --format='{{.State.Status}}' "${container}")" != "running" ]]; then
         echo "Required container is not running: ${container}" >&2
         compose ps

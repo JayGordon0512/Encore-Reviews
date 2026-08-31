@@ -3,8 +3,8 @@
 This stack deploys the `main` branch to a dedicated staging Droplet using the
 same containerised operating pattern as TicketPal staging. It runs PHP 8.4,
 Nginx, the database-backed invitation queue worker and the Laravel scheduler.
-PostgreSQL remains on DigitalOcean's managed database service and organiser
-artwork remains in Spaces.
+PostgreSQL runs as a private container with a persistent Docker volume, while
+organiser artwork and verified daily database backups remain in Spaces.
 
 The host Nginx server proxies `staging.encorereviews.co.uk` to the container
 network through `127.0.0.1:8081`. Only ports 22, 80 and 443 should be publicly
@@ -23,6 +23,8 @@ the migration.
 - automatic security updates and DigitalOcean monitoring
 - firewall allowing SSH, HTTP and HTTPS only
 - a non-login `encore-deploy` deployment identity using the repository deploy key
+- a daily systemd timer that verifies a PostgreSQL custom-format dump before
+  uploading it to `database-backups/` in the Encore Spaces bucket
 
 Clone the repository into `/opt/encore-staging/repository`, owned by
 `encore-deploy`, and install the audited deployment wrapper as root:
@@ -36,6 +38,18 @@ visudo -cf deploy/staging/sudoers.encore-deploy
 install -o root -g root -m 0440 \
   deploy/staging/sudoers.encore-deploy \
   /etc/sudoers.d/encore-deploy
+
+install -o root -g root -m 0750 \
+  deploy/staging/backup-encore-staging \
+  /usr/local/sbin/backup-encore-staging
+install -o root -g root -m 0644 \
+  deploy/staging/encore-staging-backup.service \
+  /etc/systemd/system/encore-staging-backup.service
+install -o root -g root -m 0644 \
+  deploy/staging/encore-staging-backup.timer \
+  /etc/systemd/system/encore-staging-backup.timer
+systemctl daemon-reload
+systemctl enable --now encore-staging-backup.timer
 ```
 
 Install `host-nginx.conf` under `/etc/nginx/sites-available/encore-staging`,
@@ -60,12 +74,14 @@ container health.
 
 1. Create and harden the dedicated Droplet.
 2. Copy the existing App Platform settings into the root-only runtime file.
-3. Use the managed PostgreSQL private connection URL and allow the Droplet as a
-   trusted source.
+3. Start the private PostgreSQL service, restore a verified App Platform dump,
+   and compare source and destination table counts.
 4. Deploy while the existing App Platform application remains live.
-5. Test the Droplet directly using a temporary host-header override.
-6. Lower DNS TTL, switch `staging.encorereviews.co.uk`, issue TLS and test again.
-7. Run a controlled invitation test while organiser invitation issuing remains
+5. Run and verify an initial Spaces database backup.
+6. Test the Droplet directly using a temporary host-header override.
+7. Lower DNS TTL, switch `staging.encorereviews.co.uk`, issue TLS and test again.
+8. Run a controlled invitation test while organiser invitation issuing remains
    disabled by default.
-8. Archive the App Platform application only after the monitoring window and a
-   rollback decision point. Do not delete the managed database or Spaces data.
+9. Archive the App Platform application and remove its development database only
+   after the monitoring window and a rollback decision point. Never delete the
+   Spaces data.

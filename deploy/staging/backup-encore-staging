@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+
+set -Eeuo pipefail
+
+readonly REPOSITORY="/opt/encore-staging/repository"
+readonly ENV_FILE="/opt/encore-staging/shared/.env"
+readonly COMPOSE_FILE="${REPOSITORY}/deploy/staging/compose.yml"
+readonly BACKUP_DIRECTORY="/opt/encore-staging/backups"
+readonly LOCK_FILE="/run/lock/encore-staging-backup.lock"
+
+if [[ "${EUID}" -ne 0 ]]; then
+    echo "This command must run as root." >&2
+    exit 1
+fi
+
+if [[ "$#" -ne 0 ]]; then
+    echo "This command does not accept arguments." >&2
+    exit 1
+fi
+
+for required_path in "${REPOSITORY}/.git" "${ENV_FILE}" "${COMPOSE_FILE}"; do
+    if [[ ! -e "${required_path}" ]]; then
+        echo "Required backup path is missing: ${required_path}" >&2
+        exit 1
+    fi
+done
+
+install -d -o root -g root -m 0700 "${BACKUP_DIRECTORY}"
+
+exec 9>"${LOCK_FILE}"
+if ! flock --nonblock 9; then
+    echo "A staging backup is already running." >&2
+    exit 1
+fi
+
+compose() {
+    docker compose \
+        --env-file "${ENV_FILE}" \
+        --file "${COMPOSE_FILE}" \
+        "$@"
+}
+
+readonly TIMESTAMP="$(date -u +%Y%m%dT%H%M%SZ)"
+readonly FILENAME="encore-staging-${TIMESTAMP}.dump"
+readonly TEMPORARY_FILE="${BACKUP_DIRECTORY}/.${FILENAME}.tmp"
+readonly BACKUP_FILE="${BACKUP_DIRECTORY}/${FILENAME}"
+
+cleanup() {
+    rm -f "${TEMPORARY_FILE}"
+}
+trap cleanup EXIT
+
+compose exec -T database sh -c \
+    'exec pg_dump --username="$POSTGRES_USER" --dbname="$POSTGRES_DB" --format=custom --no-owner --no-acl' \
+    > "${TEMPORARY_FILE}"
+
+compose exec -T database pg_restore --list < "${TEMPORARY_FILE}" > /dev/null
+chmod 0600 "${TEMPORARY_FILE}"
+mv "${TEMPORARY_FILE}" "${BACKUP_FILE}"
+
+compose run --rm --no-deps --entrypoint sh backup -c \
+    'exec aws s3 cp "/backups/$1" "s3://$AWS_BUCKET/database-backups/$1" --endpoint-url "$AWS_ENDPOINT" --only-show-errors' \
+    -- "${FILENAME}"
+
+find "${BACKUP_DIRECTORY}" -type f -name 'encore-staging-*.dump' -mtime +7 -delete
+
+printf 'BACKUP=%s\n' "${BACKUP_FILE}"
+printf 'REMOTE=uploaded\n'
+printf 'HEALTH=ok\n'

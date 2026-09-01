@@ -78,27 +78,45 @@
         </div>
       </fieldset>
 
-      <fieldset class="er-formSection" data-performance-editor>
+      <div class="er-field er-durationField">
+        <label for="duration_minutes">Event duration</label>
+        <select class="er-input" id="duration_minutes" name="duration_minutes" required data-event-duration>
+          @foreach([30, 45, 60, 75, 90, 105, 120, 150, 180, 240, 300, 360] as $minutes)
+            <option value="{{ $minutes }}" @selected((int) old('duration_minutes', 150) === $minutes)>
+              @if($minutes < 60)
+                {{ $minutes }} minutes
+              @elseif($minutes % 60 === 0)
+                {{ intdiv($minutes, 60) }} {{ Str::plural('hour', intdiv($minutes, 60)) }}
+              @else
+                {{ intdiv($minutes, 60) }} hour {{ $minutes % 60 }} minutes
+              @endif
+            </option>
+          @endforeach
+        </select>
+        <p class="er-fieldHint">Encore uses this with each start time to calculate when the event ends and when review invitations become due.</p>
+        @error('duration_minutes')<p class="er-fieldError">{{ $message }}</p>@enderror
+      </div>
+
+      <fieldset class="er-formSection" data-performance-editor data-invitation-delay-hours="{{ config('encore.audience_imports.invitation_delay_hours') }}">
         <div class="er-formSection__header">
           <div>
             <legend>Event dates</legend>
-            <p>Add each performance date and time. End time is optional.</p>
+            <p>Add each performance start. Encore calculates the end and invitation time automatically.</p>
           </div>
           <button class="er-btn er-btn--secondary er-btn--small" type="button" data-add-performance>Add another date</button>
         </div>
 
         <div class="er-performanceEditor" data-performance-list>
-          @foreach(old('performances', [['starts_at' => '', 'ends_at' => '']]) as $index => $performance)
+          @foreach(old('performances', [['starts_at' => '']]) as $index => $performance)
             <div class="er-performanceRow" data-performance-row>
               <div class="er-field">
                 <label for="performance_{{ $index }}_starts_at">Starts</label>
                 <input class="er-input" type="datetime-local" id="performance_{{ $index }}_starts_at" name="performances[{{ $index }}][starts_at]" value="{{ $performance['starts_at'] ?? '' }}" required>
                 @error("performances.$index.starts_at")<p class="er-fieldError">{{ $message }}</p>@enderror
               </div>
-              <div class="er-field">
-                <label for="performance_{{ $index }}_ends_at">Ends <span class="er-muted">(optional)</span></label>
-                <input class="er-input" type="datetime-local" id="performance_{{ $index }}_ends_at" name="performances[{{ $index }}][ends_at]" value="{{ $performance['ends_at'] ?? '' }}">
-                @error("performances.$index.ends_at")<p class="er-fieldError">{{ $message }}</p>@enderror
+              <div class="er-performanceTiming" aria-live="polite">
+                <strong>Automatic timing</strong>
+                <output data-performance-timing>Choose a start time</output>
               </div>
               <button class="er-btn er-btn--secondary er-btn--small er-performanceRow__remove" type="button" data-remove-performance>Remove</button>
             </div>
@@ -111,9 +129,9 @@
               <label for="performance___INDEX___starts_at">Starts</label>
               <input class="er-input" type="datetime-local" id="performance___INDEX___starts_at" name="performances[__INDEX__][starts_at]" required>
             </div>
-            <div class="er-field">
-              <label for="performance___INDEX___ends_at">Ends <span class="er-muted">(optional)</span></label>
-              <input class="er-input" type="datetime-local" id="performance___INDEX___ends_at" name="performances[__INDEX__][ends_at]">
+            <div class="er-performanceTiming" aria-live="polite">
+              <strong>Automatic timing</strong>
+              <output data-performance-timing>Choose a start time</output>
             </div>
             <button class="er-btn er-btn--secondary er-btn--small er-performanceRow__remove" type="button" data-remove-performance>Remove</button>
           </div>

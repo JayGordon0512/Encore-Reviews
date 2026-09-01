@@ -67,6 +67,7 @@ A release record must distinguish implementation completion, deployment completi
 
 | Release | Status | Purpose |
 | --- | --- | --- |
+| [v1.6.0 Duration-Based Invitation Scheduling](v1.6.0-duration-based-invitation-scheduling.md) | Implemented locally; activation pending | Calculates review-email timing from performance start, duration and the approved post-event delay. |
 | [v1.5.0 Invitation Scheduling Visibility](v1.5.0-invitation-scheduling-visibility.md) | Implemented locally; activation pending | Gives organisers privacy-safe delivery status and operators a controlled, audited release path for held invitations. |
 | [v1.4.0 Staging Droplet Runtime](v1.4.0-staging-droplet-runtime.md) | Deployed to staging | Records the dedicated staging runtime, private database and supervised web, scheduler and invitation worker services. |
 | [v1.3.0 Organiser Audience Invitations](v1.3.0-organiser-audience-invitations.md) | Implemented; activation pending | Adds encrypted CSV attendance import and independently gated organiser invitation scheduling. |

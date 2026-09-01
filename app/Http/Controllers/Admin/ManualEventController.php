@@ -9,6 +9,7 @@ use App\Models\Performance;
 use App\Models\Show;
 use App\Models\Venue;
 use App\Services\AuditLogger;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -46,9 +47,9 @@ class ManualEventController extends Controller
             'venue_name' => ['nullable', 'string', 'max:255'],
             'venue_city' => ['nullable', 'string', 'max:255'],
             'venue_postcode' => ['nullable', 'string', 'max:30'],
+            'duration_minutes' => ['required', 'integer', 'min:15', 'max:1440'],
             'performances' => ['required', 'array', 'min:1', 'max:100'],
             'performances.*.starts_at' => ['required', 'date', 'distinct'],
-            'performances.*.ends_at' => ['nullable', 'date', 'after:performances.*.starts_at'],
         ]);
 
         $correlationId = (string) Str::uuid();
@@ -90,11 +91,12 @@ class ManualEventController extends Controller
                 ]);
 
                 foreach ($validated['performances'] as $index => $performance) {
+                    $startsAt = CarbonImmutable::parse($performance['starts_at']);
                     Performance::create([
                         'show_id' => $show->id,
                         'venue_id' => $venue?->id,
-                        'starts_at' => $performance['starts_at'],
-                        'ends_at' => $performance['ends_at'] ?? null,
+                        'starts_at' => $startsAt,
+                        'ends_at' => $startsAt->addMinutes((int) $validated['duration_minutes']),
                         'status' => 'scheduled',
                         'provider_source' => Show::SOURCE_MANUAL,
                         'provider_event_id' => $eventReference,
@@ -112,6 +114,7 @@ class ManualEventController extends Controller
                         'title' => $show->title,
                         'source' => Show::SOURCE_MANUAL,
                         'performance_count' => count($validated['performances']),
+                        'duration_minutes' => (int) $validated['duration_minutes'],
                         'venue_id' => $venue?->id,
                         'has_custom_artwork' => $storedArtwork !== null,
                     ],

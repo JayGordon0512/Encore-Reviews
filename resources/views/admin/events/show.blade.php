@@ -59,8 +59,14 @@
               <div>
                 <h3>{{ $performance->starts_at?->format('D j M Y, H:i') ?? 'Date to be confirmed' }}</h3>
                 <p>{{ $performance->venue?->name ?? 'Venue to be confirmed' }}@if($performance->venue?->city) · {{ $performance->venue->city }} @endif</p>
+                @if($performance->starts_at && $performance->ends_at)
+                  <p>
+                    Ends {{ $performance->ends_at->format('H:i') }} · planned review email time
+                    {{ $performance->ends_at->copy()->addHours($invitationDelayHours)->format('D j M Y, H:i') }}
+                  </p>
+                @endif
                 @if($performance->next_invitation_at)
-                  <p>Next email run: {{ \Illuminate\Support\Carbon::parse($performance->next_invitation_at)->format('D j M Y, H:i') }}</p>
+                  <p>Next queued email: {{ \Illuminate\Support\Carbon::parse($performance->next_invitation_at)->format('D j M Y, H:i') }}</p>
                 @endif
               </div>
               <div class="er-invitationMetrics" aria-label="Invitation status">

@@ -111,6 +111,20 @@ MAIL_FROM_ADDRESS=reviews@encorereviews.co.uk
 MAIL_FROM_NAME="Encore Reviews"
 ```
 
+Invitation due time is calculated as performance start plus duration plus the
+source-specific invitation delay. Manual events require an explicit duration
+and persist the calculated end time. Provider performances should supply
+`ends_at`; where it is absent, Encore uses the operational fallback below:
+
+```dotenv
+ENCORE_DEFAULT_EVENT_DURATION_MINUTES=150
+ENCORE_ORGANISER_INVITATION_DELAY_HOURS=1
+ENCORE_PROVIDER_V2_INVITATION_DELAY_HOURS=1
+```
+
+Changing the fallback affects newly created schedules only. It does not rewrite
+an existing invitation schedule.
+
 Inspect due-work dispatch without exposing contact data:
 
 ```bash

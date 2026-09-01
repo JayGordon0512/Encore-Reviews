@@ -34,7 +34,8 @@ class OrganiserEventManagementTest extends TestCase
             'encore.audience_imports.contact_fingerprint_version' => 1,
             'encore.audience_imports.max_rows' => 1000,
             'encore.audience_imports.invitation_issuing_enabled' => false,
-            'encore.audience_imports.invitation_delay_hours' => 2,
+            'encore.audience_imports.invitation_delay_hours' => 1,
+            'encore.invitations.default_event_duration_minutes' => 150,
             'encore.event_images.disk' => 'public',
             'encore.event_images.max_size_kb' => 5120,
         ]);
@@ -53,9 +54,10 @@ class OrganiserEventManagementTest extends TestCase
             'venue_name' => 'Riverside Hall',
             'venue_city' => 'Glasgow',
             'venue_postcode' => 'G1 1AA',
+            'duration_minutes' => 120,
             'performances' => [
-                ['starts_at' => '2030-10-10T19:30', 'ends_at' => '2030-10-10T21:30'],
-                ['starts_at' => '2030-10-11T14:30', 'ends_at' => '2030-10-11T16:30'],
+                ['starts_at' => '2030-10-10T19:30'],
+                ['starts_at' => '2030-10-11T14:30'],
             ],
         ]);
 
@@ -70,6 +72,10 @@ class OrganiserEventManagementTest extends TestCase
             ['2030-10-10 19:30', '2030-10-11 14:30'],
             $show->performances()->orderBy('starts_at')->get()->map(fn (Performance $performance) => $performance->starts_at->format('Y-m-d H:i'))->all(),
         );
+        $this->assertSame(
+            ['2030-10-10 21:30', '2030-10-11 16:30'],
+            $show->performances()->orderBy('starts_at')->get()->map(fn (Performance $performance) => $performance->ends_at->format('Y-m-d H:i'))->all(),
+        );
         $this->assertDatabaseHas('venues', [
             'organisation_id' => $organisation->id,
             'name' => 'Riverside Hall',
@@ -80,6 +86,7 @@ class OrganiserEventManagementTest extends TestCase
         $this->assertSame($user->id, $audit->user_id);
         $this->assertSame($organisation->id, $audit->organisation_id);
         $this->assertSame(2, $audit->after_state['performance_count']);
+        $this->assertSame(120, $audit->after_state['duration_minutes']);
     }
 
     public function test_manual_event_is_visible_on_dashboard_and_public_page_with_dates(): void
@@ -108,6 +115,24 @@ class OrganiserEventManagementTest extends TestCase
         $public->assertDontSee('powered by verified TicketPal ticket data');
     }
 
+    public function test_manual_event_requires_a_realistic_duration(): void
+    {
+        [, $user] = $this->organiser('Duration Validation');
+
+        $this->actingAs($user)->post(route('admin.events.store'), [
+            'title' => 'Missing Duration Event',
+            'performances' => [['starts_at' => '2030-10-10T19:30']],
+        ])->assertSessionHasErrors('duration_minutes');
+
+        $this->actingAs($user)->post(route('admin.events.store'), [
+            'title' => 'Unrealistic Duration Event',
+            'duration_minutes' => 5,
+            'performances' => [['starts_at' => '2030-10-10T19:30']],
+        ])->assertSessionHasErrors('duration_minutes');
+
+        $this->assertDatabaseCount('shows', 0);
+    }
+
     public function test_organiser_can_upload_tenant_scoped_artwork_when_creating_an_event(): void
     {
         Storage::fake('public');
@@ -116,8 +141,9 @@ class OrganiserEventManagementTest extends TestCase
         $response = $this->actingAs($user)->post(route('admin.events.store'), [
             'title' => 'Illustrated Event',
             'event_image' => UploadedFile::fake()->image('poster.jpg', 1200, 675),
+            'duration_minutes' => 90,
             'performances' => [
-                ['starts_at' => '2032-06-10T19:30', 'ends_at' => ''],
+                ['starts_at' => '2032-06-10T19:30'],
             ],
         ]);
 
@@ -126,6 +152,7 @@ class OrganiserEventManagementTest extends TestCase
         $this->assertSame('public', $show->primary_image_disk);
         $this->assertStringStartsWith('event-artwork/'.$organisation->id.'/', $show->primary_image_storage_path);
         $this->assertStringEndsWith('.jpg', $show->primary_image_storage_path);
+        $this->assertSame('2032-06-10 21:00', $show->performances()->sole()->ends_at->format('Y-m-d H:i'));
         Storage::disk('public')->assertExists($show->primary_image_storage_path);
 
         $public = $this->get(route('shows.show', $show));
@@ -214,6 +241,11 @@ class OrganiserEventManagementTest extends TestCase
         $this->assertSame(
             ['organiser_csv'],
             ReviewInvitationSchedule::query()->distinct()->pluck('source')->all(),
+        );
+        $this->assertSame(
+            ['2031-05-01 23:00', '2031-05-01 23:00'],
+            ReviewInvitationSchedule::query()->orderBy('id')->get()
+                ->map(fn (ReviewInvitationSchedule $schedule) => $schedule->scheduled_for->format('Y-m-d H:i'))->all(),
         );
         $this->assertDatabaseHas('audience_attendances', [
             'organisation_id' => $organisation->id,

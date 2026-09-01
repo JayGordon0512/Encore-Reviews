@@ -6,7 +6,7 @@ return [
         'invitation_issuing_enabled' => (bool) env('ENCORE_PROVIDER_V2_INVITATION_ISSUING_ENABLED', false),
         'signature_tolerance_seconds' => (int) env('ENCORE_PROVIDER_V2_SIGNATURE_TOLERANCE', 300),
         'nonce_retention_seconds' => (int) env('ENCORE_PROVIDER_V2_NONCE_RETENTION', 900),
-        'invitation_delay_hours' => (int) env('ENCORE_PROVIDER_V2_INVITATION_DELAY_HOURS', 2),
+        'invitation_delay_hours' => (int) env('ENCORE_PROVIDER_V2_INVITATION_DELAY_HOURS', 1),
         'contact_fingerprint_key' => env('ENCORE_CONTACT_FINGERPRINT_KEY'),
         'contact_fingerprint_version' => (int) env('ENCORE_CONTACT_FINGERPRINT_VERSION', 1),
         'catalogue_credentials' => [
@@ -32,6 +32,7 @@ return [
         'max_attempts' => (int) env('ENCORE_INVITATION_MAX_ATTEMPTS', 3),
         'retry_delay_minutes' => (int) env('ENCORE_INVITATION_RETRY_DELAY_MINUTES', 15),
         'claim_timeout_minutes' => (int) env('ENCORE_INVITATION_CLAIM_TIMEOUT_MINUTES', 5),
+        'default_event_duration_minutes' => (int) env('ENCORE_DEFAULT_EVENT_DURATION_MINUTES', 150),
     ],
 
     'audience_imports' => [
@@ -39,7 +40,7 @@ return [
         'contact_fingerprint_version' => (int) env('ENCORE_CONTACT_FINGERPRINT_VERSION', 1),
         'max_rows' => (int) env('ENCORE_AUDIENCE_IMPORT_MAX_ROWS', 1000),
         'invitation_issuing_enabled' => (bool) env('ENCORE_ORGANISER_INVITATION_ISSUING_ENABLED', false),
-        'invitation_delay_hours' => (int) env('ENCORE_ORGANISER_INVITATION_DELAY_HOURS', 2),
+        'invitation_delay_hours' => (int) env('ENCORE_ORGANISER_INVITATION_DELAY_HOURS', 1),
     ],
 
     'event_images' => [

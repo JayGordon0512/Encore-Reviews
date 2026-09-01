@@ -2,6 +2,7 @@
 
 namespace App\Application\Audience;
 
+use App\Application\Invitations\DetermineInvitationScheduleTime;
 use App\Models\AudienceAttendance;
 use App\Models\AudienceImport;
 use App\Models\Performance;
@@ -19,7 +20,10 @@ use RuntimeException;
 
 final class ImportOrganiserAudienceService
 {
-    public function __construct(private readonly AuditLogger $auditLogger) {}
+    public function __construct(
+        private readonly AuditLogger $auditLogger,
+        private readonly DetermineInvitationScheduleTime $scheduleTime,
+    ) {}
 
     public function import(
         User $actor,
@@ -98,9 +102,10 @@ final class ImportOrganiserAudienceService
                 );
 
                 if ($attendance->wasRecentlyCreated) {
-                    $scheduledFor = ($performance->ends_at ?? $performance->starts_at ?? now())
-                        ->copy()
-                        ->addHours((int) config('encore.audience_imports.invitation_delay_hours'));
+                    $scheduledFor = $this->scheduleTime->forPerformance(
+                        $performance,
+                        (int) config('encore.audience_imports.invitation_delay_hours'),
+                    );
                     if ($scheduledFor->isPast()) {
                         $scheduledFor = now();
                     }

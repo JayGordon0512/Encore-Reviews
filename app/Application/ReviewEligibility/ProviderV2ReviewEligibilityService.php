@@ -2,6 +2,7 @@
 
 namespace App\Application\ReviewEligibility;
 
+use App\Application\Invitations\DetermineInvitationScheduleTime;
 use App\Domain\Integration\ProviderAuthority;
 use App\Domain\ReviewEligibility\EligibilityIdGenerator;
 use App\Models\AuditLog;
@@ -21,7 +22,10 @@ use RuntimeException;
 
 final class ProviderV2ReviewEligibilityService
 {
-    public function __construct(private readonly EligibilityIdGenerator $eligibilityIds) {}
+    public function __construct(
+        private readonly EligibilityIdGenerator $eligibilityIds,
+        private readonly DetermineInvitationScheduleTime $scheduleTime,
+    ) {}
 
     /** @param array<string, mixed> $payload
      * @return array<string, mixed>
@@ -97,8 +101,10 @@ final class ProviderV2ReviewEligibilityService
                 'occurred_at' => $payload['occurred_at'],
             ]);
             $performance = $mapping->performance()->firstOrFail();
-            $scheduleAt = ($performance->ends_at ?? $performance->starts_at ?? now())
-                ->addHours((int) config('encore.provider_v2.invitation_delay_hours'));
+            $scheduleAt = $this->scheduleTime->forPerformance(
+                $performance,
+                (int) config('encore.provider_v2.invitation_delay_hours'),
+            );
             ReviewInvitationSchedule::create([
                 'eligibility_id' => $eligibility->id,
                 'source' => 'provider_v2',

@@ -45,7 +45,36 @@ document.addEventListener("DOMContentLoaded", () => {
   const list = editor.querySelector("[data-performance-list]");
   const template = editor.querySelector("[data-performance-template]");
   const addButton = editor.querySelector("[data-add-performance]");
+  const durationInput = document.querySelector("[data-event-duration]");
+  const invitationDelayHours = Number(editor.dataset.invitationDelayHours || 0);
   let nextIndex = list.querySelectorAll("[data-performance-row]").length;
+
+  const formatDateTime = (date) => new Intl.DateTimeFormat("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+
+  const updateTiming = (row) => {
+    const startInput = row.querySelector('input[type="datetime-local"]');
+    const output = row.querySelector("[data-performance-timing]");
+    const durationMinutes = Number(durationInput?.value || 0);
+    if (!startInput?.value || !output || durationMinutes <= 0) {
+      if (output) output.textContent = "Choose a start time";
+      return;
+    }
+
+    const startsAt = new Date(startInput.value);
+    const endsAt = new Date(startsAt.getTime() + durationMinutes * 60 * 1000);
+    const invitationAt = new Date(endsAt.getTime() + invitationDelayHours * 60 * 60 * 1000);
+    output.textContent = `Ends ${formatDateTime(endsAt)} · reviews scheduled ${formatDateTime(invitationAt)}`;
+  };
+
+  const updateAllTimings = () => {
+    list.querySelectorAll("[data-performance-row]").forEach(updateTiming);
+  };
 
   const updateRemoveButtons = () => {
     const rows = list.querySelectorAll("[data-performance-row]");
@@ -58,6 +87,7 @@ document.addEventListener("DOMContentLoaded", () => {
   addButton?.addEventListener("click", () => {
     list.insertAdjacentHTML("beforeend", template.innerHTML.replaceAll("__INDEX__", String(nextIndex++)));
     updateRemoveButtons();
+    updateAllTimings();
   });
 
   list.addEventListener("click", (event) => {
@@ -67,5 +97,12 @@ document.addEventListener("DOMContentLoaded", () => {
     updateRemoveButtons();
   });
 
+  list.addEventListener("input", (event) => {
+    const row = event.target.closest("[data-performance-row]");
+    if (row) updateTiming(row);
+  });
+  durationInput?.addEventListener("change", updateAllTimings);
+
   updateRemoveButtons();
+  updateAllTimings();
 });

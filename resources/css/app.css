@@ -860,6 +860,24 @@ html{ scroll-padding-top: 82px; }
   background:var(--soft);
 }
 
+.er-durationField{
+  max-width:360px;
+}
+
+.er-performanceTiming{
+  display:grid;
+  align-content:center;
+  gap:5px;
+  min-height:44px;
+  color:var(--muted);
+  font-size:0.88rem;
+}
+
+.er-performanceTiming strong{
+  color:var(--ink);
+  font-size:0.9rem;
+}
+
 .er-performanceRow__remove:disabled{
   visibility:hidden;
 }

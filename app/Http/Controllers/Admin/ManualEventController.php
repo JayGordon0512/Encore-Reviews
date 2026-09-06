@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Application\Events\CancelManualPerformanceService;
 use App\Application\Events\StoredEventArtwork;
 use App\Application\Events\StoreEventArtworkService;
+use App\Application\Events\UpdateManualEventService;
 use App\Http\Controllers\Controller;
 use App\Models\Performance;
 use App\Models\Show;
@@ -169,6 +171,61 @@ class ManualEventController extends Controller
             'invitationIssuingEnabled' => (bool) config('encore.audience_imports.invitation_issuing_enabled'),
             'invitationDelayHours' => (int) config('encore.audience_imports.invitation_delay_hours'),
         ]);
+    }
+
+    public function edit(Request $request, Show $show): View
+    {
+        $this->authorizeOwnedManualEvent($request, $show);
+        $show->load(['performances' => fn ($query) => $query->with('venue')->whereNotIn('status', ['cancelled', 'archived', 'deleted'])->orderBy('starts_at')]);
+        $firstPerformance = $show->performances->first();
+        $durationMinutes = $firstPerformance?->starts_at && $firstPerformance?->ends_at
+            ? (int) $firstPerformance->starts_at->diffInMinutes($firstPerformance->ends_at)
+            : (int) config('encore.invitations.default_event_duration_minutes');
+
+        return view('admin.events.edit', compact('show', 'durationMinutes'));
+    }
+
+    public function update(Request $request, Show $show, UpdateManualEventService $updater): RedirectResponse
+    {
+        $this->authorizeOwnedManualEvent($request, $show);
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'summary' => ['nullable', 'string', 'max:1000'],
+            'description' => ['nullable', 'string', 'max:10000'],
+            'genre' => ['nullable', 'string', 'max:100'],
+            'ticket_url' => ['nullable', 'url:http,https', 'max:2000'],
+            'venue_name' => ['nullable', 'string', 'max:255'],
+            'venue_city' => ['nullable', 'string', 'max:255'],
+            'venue_postcode' => ['nullable', 'string', 'max:30'],
+            'duration_minutes' => ['required', 'integer', 'min:15', 'max:1440'],
+            'performances' => ['required', 'array', 'min:1', 'max:100'],
+            'performances.*.id' => ['nullable', 'uuid', 'distinct'],
+            'performances.*.starts_at' => ['required', 'date', 'distinct'],
+        ]);
+        $rescheduled = $updater->update(
+            $request->user(),
+            $show,
+            $validated,
+            $request->ip(),
+            $request->userAgent(),
+        );
+
+        return redirect()->route('admin.events.show', $show)
+            ->with('status', "Event updated; {$rescheduled} unsent invitation schedule(s) recalculated.");
+    }
+
+    public function cancelPerformance(
+        Request $request,
+        Show $show,
+        Performance $performance,
+        CancelManualPerformanceService $canceller,
+    ): RedirectResponse {
+        $this->authorizeOwnedManualEvent($request, $show);
+        abort_unless($performance->show_id === $show->id, 404);
+        $canceller->cancel($request->user(), $show, $performance, $request->ip(), $request->userAgent());
+
+        return redirect()->route('admin.events.show', $show)
+            ->with('status', 'Performance cancelled and its unused invitations withdrawn.');
     }
 
     public function updateArtwork(Request $request, Show $show): RedirectResponse

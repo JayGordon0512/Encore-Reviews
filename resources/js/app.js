@@ -80,7 +80,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const rows = list.querySelectorAll("[data-performance-row]");
     rows.forEach((row) => {
       const removeButton = row.querySelector("[data-remove-performance]");
-      if (removeButton) removeButton.disabled = rows.length === 1;
+      const isPersisted = Boolean(row.querySelector('input[type="hidden"]'));
+      if (removeButton) removeButton.disabled = rows.length === 1 || isPersisted;
     });
   };
 

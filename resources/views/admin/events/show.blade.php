@@ -12,6 +12,7 @@
         <p class="er-sectionIntro">{{ $show->performances->count() }} date(s) · {{ $show->audience_attendances_count }} imported customer(s)</p>
       </div>
       <div class="er-adminActions">
+        <a class="er-btn" href="{{ route('admin.events.edit', $show) }}">Edit event</a>
         <a class="er-btn er-btn--secondary" href="{{ route('shows.show', $show) }}">View public page</a>
         <a class="er-btn er-btn--secondary" href="{{ route('admin.dashboard') }}">Back to dashboard</a>
       </div>
@@ -59,7 +60,9 @@
               <div>
                 <h3>{{ $performance->starts_at?->format('D j M Y, H:i') ?? 'Date to be confirmed' }}</h3>
                 <p>{{ $performance->venue?->name ?? 'Venue to be confirmed' }}@if($performance->venue?->city) · {{ $performance->venue->city }} @endif</p>
-                @if($performance->starts_at && $performance->ends_at)
+                @if($performance->status === 'cancelled')
+                  <p><strong>Cancelled</strong> · no further review invitations can be issued for this date.</p>
+                @elseif($performance->starts_at && $performance->ends_at)
                   <p>
                     Ends {{ $performance->ends_at->format('H:i') }} · planned review email time
                     {{ $performance->ends_at->copy()->addHours($invitationDelayHours)->format('D j M Y, H:i') }}
@@ -76,6 +79,13 @@
                 @if($performance->invitation_held_count)<span><strong>{{ $performance->invitation_held_count }}</strong> held</span>@endif
                 @if($performance->invitation_attention_count)<span class="er-invitationMetrics__attention"><strong>{{ $performance->invitation_attention_count }}</strong> need attention</span>@endif
                 @if($performance->invitation_stopped_count)<span><strong>{{ $performance->invitation_stopped_count }}</strong> stopped</span>@endif
+                @if($performance->status !== 'cancelled')
+                  <form method="POST" action="{{ route('admin.events.performances.cancel', [$show, $performance]) }}" onsubmit="return confirm('Cancel this performance and withdraw its unused review invitations?')">
+                    @csrf
+                    @method('PATCH')
+                    <button class="er-btn er-btn--secondary er-btn--small" type="submit">Cancel date</button>
+                  </form>
+                @endif
               </div>
             </article>
           @endforeach
@@ -87,13 +97,17 @@
         <p>Upload a CSV with an <code>email</code> column and optional <code>name</code> column. Maximum {{ config('encore.audience_imports.max_rows') }} rows.</p>
         <p><a href="{{ route('admin.audience-imports.template') }}">Download the CSV template</a></p>
 
+        @if($show->performances->whereNotIn('status', ['cancelled', 'archived', 'deleted'])->isEmpty())
+          <div class="er-notice">Add a new event date before importing customers.</div>
+        @endif
+
         <form class="er-form" method="POST" action="{{ route('admin.audience-imports.store', $show) }}" enctype="multipart/form-data">
           @csrf
           <div class="er-field">
             <label for="performance_id">Event date</label>
             <select class="er-input" id="performance_id" name="performance_id" required>
               <option value="">Choose a date</option>
-              @foreach($show->performances as $performance)
+              @foreach($show->performances->whereNotIn('status', ['cancelled', 'archived', 'deleted']) as $performance)
                 <option value="{{ $performance->id }}" @selected(old('performance_id') === $performance->id)>{{ $performance->starts_at?->format('D j M Y, H:i') ?? 'Date to be confirmed' }}</option>
               @endforeach
             </select>
@@ -120,7 +134,7 @@
               Invitations will be held while automatic sending is paused.
             @endif
           </div>
-          <button class="er-btn" type="submit">Import customers</button>
+          <button class="er-btn" type="submit" @disabled($show->performances->whereNotIn('status', ['cancelled', 'archived', 'deleted'])->isEmpty())>Import customers</button>
         </form>
       </section>
     </div>

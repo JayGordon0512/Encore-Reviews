@@ -125,6 +125,14 @@ ENCORE_PROVIDER_V2_INVITATION_DELAY_HOURS=1
 Changing the fallback affects newly created schedules only. It does not rewrite
 an existing invitation schedule.
 
+When an organiser changes a manual performance start time or event duration,
+Encore recalculates that performance's scheduled and disabled-held invitation
+times. Issued invitations and terminal schedule states remain immutable. When
+an organiser cancels a performance, Encore cancels its pending schedules,
+revokes every unused invitation link and prevents further audience imports for
+that date. Cancellation does not recall an email that has already left the mail
+provider; the revoked link is rejected if opened.
+
 Inspect due-work dispatch without exposing contact data:
 
 ```bash

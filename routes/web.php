@@ -39,7 +39,11 @@ Route::middleware(['auth', 'admin.active'])->group(function (): void {
     Route::patch('/admin/reviews/{review}', [ReviewModerationController::class, 'update'])->name('admin.reviews.update');
     Route::get('/admin/events/create', [ManualEventController::class, 'create'])->name('admin.events.create');
     Route::post('/admin/events', [ManualEventController::class, 'store'])->name('admin.events.store');
+    Route::get('/admin/events/{show}/edit', [ManualEventController::class, 'edit'])->name('admin.events.edit');
+    Route::patch('/admin/events/{show}', [ManualEventController::class, 'update'])->name('admin.events.update');
     Route::get('/admin/events/{show}', [ManualEventController::class, 'show'])->name('admin.events.show');
+    Route::patch('/admin/events/{show}/performances/{performance}/cancel', [ManualEventController::class, 'cancelPerformance'])
+        ->name('admin.events.performances.cancel');
     Route::patch('/admin/events/{show}/artwork', [ManualEventController::class, 'updateArtwork'])
         ->name('admin.events.artwork.update');
     Route::get('/admin/customer-import-template.csv', [AudienceImportController::class, 'template'])

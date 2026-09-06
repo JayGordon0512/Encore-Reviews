@@ -67,6 +67,7 @@ A release record must distinguish implementation completion, deployment completi
 
 | Release | Status | Purpose |
 | --- | --- | --- |
+| [v1.7.0 Organiser Event Rescheduling](v1.7.0-organiser-event-rescheduling.md) | Implemented locally; activation pending | Lets independent organisers edit events, add dates and safely reschedule or cancel unsent review invitations. |
 | [v1.6.0 Duration-Based Invitation Scheduling](v1.6.0-duration-based-invitation-scheduling.md) | Implemented locally; activation pending | Calculates review-email timing from performance start, duration and the approved post-event delay. |
 | [v1.5.0 Invitation Scheduling Visibility](v1.5.0-invitation-scheduling-visibility.md) | Implemented locally; activation pending | Gives organisers privacy-safe delivery status and operators a controlled, audited release path for held invitations. |
 | [v1.4.0 Staging Droplet Runtime](v1.4.0-staging-droplet-runtime.md) | Deployed to staging | Records the dedicated staging runtime, private database and supervised web, scheduler and invitation worker services. |

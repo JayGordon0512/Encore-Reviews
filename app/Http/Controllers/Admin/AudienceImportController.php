@@ -27,7 +27,9 @@ class AudienceImportController extends Controller
             'customers_csv' => ['required', 'file', 'max:2048'],
             'attendance_confirmed' => ['accepted'],
         ]);
-        $performance = $show->performances()->findOrFail($validated['performance_id']);
+        $performance = $show->performances()
+            ->whereNotIn('status', ['cancelled', 'archived', 'deleted'])
+            ->findOrFail($validated['performance_id']);
 
         $audienceImport = $importer->import(
             $request->user(),

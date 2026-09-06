@@ -10,6 +10,7 @@ use App\Models\Organisation;
 use App\Models\Performance;
 use App\Models\ProtectedReviewerContact;
 use App\Models\ReviewInvitation;
+use App\Models\ReviewInvitationDelivery;
 use App\Models\ReviewInvitationSchedule;
 use App\Models\Show;
 use App\Models\User;
@@ -377,6 +378,192 @@ class OrganiserEventManagementTest extends TestCase
             'action' => 'review_invitation.schedule_released',
             'entity_id' => $schedule->id,
         ]);
+    }
+
+    public function test_organiser_can_edit_event_timing_and_unsent_schedules_are_recalculated(): void
+    {
+        [$organisation, $user, $show, $performance] = $this->manualEvent('Rescheduled Event');
+        $this->actingAs($user)->post(route('admin.audience-imports.store', $show), [
+            'performance_id' => $performance->id,
+            'customers_csv' => UploadedFile::fake()->createWithContent('customers.csv', "email\nreschedule@example.com"),
+            'attendance_confirmed' => '1',
+        ])->assertRedirect();
+
+        $this->actingAs($user)->get(route('admin.events.edit', $show))
+            ->assertOk()
+            ->assertSee('Timing changes automatically recalculate review emails');
+
+        $response = $this->actingAs($user)->patch(route('admin.events.update', $show), [
+            'title' => 'Rescheduled Event Updated',
+            'summary' => 'Updated details',
+            'description' => '',
+            'genre' => 'Comedy',
+            'ticket_url' => 'https://example.com/rescheduled',
+            'venue_name' => 'Updated Hall',
+            'venue_city' => 'Leeds',
+            'venue_postcode' => 'LS1 1AA',
+            'duration_minutes' => 180,
+            'performances' => [
+                ['id' => $performance->id, 'starts_at' => '2031-05-02T20:00'],
+                ['starts_at' => '2031-05-03T14:00'],
+            ],
+        ]);
+
+        $response->assertRedirect(route('admin.events.show', $show));
+        $response->assertSessionHas('status', 'Event updated; 1 unsent invitation schedule(s) recalculated.');
+        $show->refresh();
+        $performance->refresh();
+        $this->assertSame('Rescheduled Event Updated', $show->title);
+        $this->assertSame('2031-05-02 20:00', $performance->starts_at->format('Y-m-d H:i'));
+        $this->assertSame('2031-05-02 23:00', $performance->ends_at->format('Y-m-d H:i'));
+        $this->assertSame('Updated Hall', $performance->venue->name);
+        $this->assertCount(2, $show->performances);
+        $schedule = ReviewInvitationSchedule::sole();
+        $this->assertSame('suppressed', $schedule->status);
+        $this->assertSame('2031-05-03 00:00', $schedule->scheduled_for->format('Y-m-d H:i'));
+
+        $audit = AuditLog::where('action', 'event.manual_updated')->sole();
+        $this->assertSame($organisation->id, $audit->organisation_id);
+        $this->assertSame(1, $audit->after_state['invitation_schedules_recalculated']);
+    }
+
+    public function test_rescheduling_requeues_an_in_flight_invitation_without_sending_the_old_link(): void
+    {
+        [, $user, $show, $performance] = $this->manualEvent('In Flight Reschedule');
+        $this->actingAs($user)->post(route('admin.audience-imports.store', $show), [
+            'performance_id' => $performance->id,
+            'customers_csv' => UploadedFile::fake()->createWithContent('customers.csv', "email\ninflight@example.com"),
+            'attendance_confirmed' => '1',
+        ])->assertRedirect();
+        $schedule = ReviewInvitationSchedule::sole();
+        $schedule->update(['status' => 'processing', 'claimed_at' => now()]);
+        $invitation = ReviewInvitation::create([
+            'audience_attendance_id' => $schedule->audience_attendance_id,
+            'performance_id' => $performance->id,
+            'email_hash' => hash('sha256', 'inflight@example.com'),
+            'token_hash' => hash('sha256', 'inflight-token'),
+            'status' => 'issued',
+            'expires_at' => now()->addWeek(),
+            'provider_source' => 'organiser_csv',
+            'attendance_state' => 'organiser_confirmed',
+        ]);
+        $delivery = ReviewInvitationDelivery::create([
+            'invitation_id' => $invitation->id,
+            'schedule_id' => $schedule->id,
+            'correlation_id' => (string) str()->uuid(),
+            'channel' => 'email',
+            'status' => 'pending',
+            'attempted_at' => now(),
+        ]);
+
+        $this->actingAs($user)->patch(route('admin.events.update', $show), [
+            'title' => $show->title,
+            'duration_minutes' => 120,
+            'performances' => [
+                ['id' => $performance->id, 'starts_at' => '2031-05-04T18:00'],
+            ],
+        ])->assertSessionHas('status', 'Event updated; 1 unsent invitation schedule(s) recalculated.');
+
+        $schedule->refresh();
+        $this->assertSame('suppressed', $schedule->status);
+        $this->assertSame('organiser_invitation_issuing_disabled', $schedule->suppression_reason);
+        $this->assertSame('2031-05-04 21:00', $schedule->scheduled_for->format('Y-m-d H:i'));
+        $this->assertNull($schedule->claimed_at);
+        $this->assertSame('revoked', $invitation->fresh()->status);
+        $this->assertSame('performance_rescheduled', $invitation->fresh()->revocation_reason);
+        $this->assertSame('failed', $delivery->fresh()->status);
+        $this->assertSame('performance_rescheduled', $delivery->fresh()->error_code);
+    }
+
+    public function test_rescheduling_does_not_rewrite_an_issued_invitation_schedule(): void
+    {
+        [, $user, $show, $performance] = $this->manualEvent('Sent Reschedule');
+        $this->actingAs($user)->post(route('admin.audience-imports.store', $show), [
+            'performance_id' => $performance->id,
+            'customers_csv' => UploadedFile::fake()->createWithContent('customers.csv', "email\nsent@example.com"),
+            'attendance_confirmed' => '1',
+        ])->assertRedirect();
+        $schedule = ReviewInvitationSchedule::sole();
+        $originalScheduledFor = $schedule->scheduled_for;
+        $schedule->update(['status' => 'issued', 'issued_at' => now()]);
+
+        $this->actingAs($user)->patch(route('admin.events.update', $show), [
+            'title' => $show->title,
+            'duration_minutes' => 180,
+            'performances' => [
+                ['id' => $performance->id, 'starts_at' => '2031-05-05T20:00'],
+            ],
+        ])->assertSessionHas('status', 'Event updated; 0 unsent invitation schedule(s) recalculated.');
+
+        $schedule->refresh();
+        $this->assertSame('issued', $schedule->status);
+        $this->assertTrue($schedule->scheduled_for->equalTo($originalScheduledFor));
+    }
+
+    public function test_cancelling_a_performance_withdraws_pending_and_unused_invitations(): void
+    {
+        [, $user, $show, $performance] = $this->manualEvent('Cancelled Performance Event');
+        $this->actingAs($user)->post(route('admin.audience-imports.store', $show), [
+            'performance_id' => $performance->id,
+            'customers_csv' => UploadedFile::fake()->createWithContent('customers.csv', "email\ncancelled@example.com"),
+            'attendance_confirmed' => '1',
+        ])->assertRedirect();
+        $schedule = ReviewInvitationSchedule::sole();
+        $attendance = $schedule->audienceAttendance;
+        $invitation = ReviewInvitation::create([
+            'audience_attendance_id' => $attendance->id,
+            'performance_id' => $performance->id,
+            'email_hash' => hash('sha256', 'cancelled@example.com'),
+            'token_hash' => hash('sha256', 'unused-cancelled-token'),
+            'status' => 'sent',
+            'sent_at' => now(),
+            'expires_at' => now()->addWeek(),
+            'provider_source' => 'organiser_csv',
+            'attendance_state' => 'organiser_confirmed',
+        ]);
+
+        $this->actingAs($user)->patch(route('admin.events.performances.cancel', [$show, $performance]))
+            ->assertRedirect(route('admin.events.show', $show))
+            ->assertSessionHas('status', 'Performance cancelled and its unused invitations withdrawn.');
+
+        $this->assertSame('cancelled', $performance->fresh()->status);
+        $this->assertSame('cancelled', $schedule->fresh()->status);
+        $this->assertSame('performance_cancelled', $schedule->fresh()->suppression_reason);
+        $this->assertSame('revoked', $invitation->fresh()->status);
+        $this->assertSame('performance_cancelled', $invitation->fresh()->revocation_reason);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'performance.manual_cancelled']);
+
+        $managementPage = $this->actingAs($user)->get(route('admin.events.show', $show));
+        $managementPage->assertOk()->assertSee('Cancelled');
+        $managementPage->assertDontSee('value="'.$performance->id.'"', false);
+
+        $publicPage = $this->get(route('shows.show', $show));
+        $publicPage->assertOk()->assertDontSee('Thu 1 May 2031, 19:30');
+    }
+
+    public function test_customers_cannot_be_imported_for_a_cancelled_performance(): void
+    {
+        [, $user, $show, $performance] = $this->manualEvent('Cancelled Import Event');
+        $performance->update(['status' => 'cancelled']);
+
+        $this->actingAs($user)->post(route('admin.audience-imports.store', $show), [
+            'performance_id' => $performance->id,
+            'customers_csv' => UploadedFile::fake()->createWithContent('customers.csv', "email\nblocked@example.com"),
+            'attendance_confirmed' => '1',
+        ])->assertNotFound();
+
+        $this->assertDatabaseCount('audience_imports', 0);
+        $this->assertDatabaseCount('audience_attendances', 0);
+    }
+
+    public function test_other_tenants_cannot_edit_or_cancel_a_manual_event(): void
+    {
+        [, , $show, $performance] = $this->manualEvent('Protected Editable Event');
+        [, $otherUser] = $this->organiser('Other Editing Organisation');
+
+        $this->actingAs($otherUser)->get(route('admin.events.edit', $show))->assertNotFound();
+        $this->actingAs($otherUser)->patch(route('admin.events.update', $show), [])->assertNotFound();
+        $this->actingAs($otherUser)->patch(route('admin.events.performances.cancel', [$show, $performance]))->assertNotFound();
     }
 
     public function test_import_requires_attendance_confirmation_and_email_header(): void

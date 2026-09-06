@@ -45,6 +45,7 @@ final class IssueReviewInvitationService
                 $delivery['show_title'],
                 $delivery['review_url'],
                 $delivery['expires_at'],
+                $delivery['delivery_id'],
             );
         } catch (Throwable) {
             $this->markFailed($delivery['schedule_id'], $delivery['invitation_id']);
@@ -138,7 +139,7 @@ final class IssueReviewInvitationService
                 'attendance_state' => $authority['attendance_state'],
                 'meta' => ['purpose' => $authority['purpose'], 'authority_source' => $schedule->source],
             ]);
-            ReviewInvitationDelivery::create([
+            $delivery = ReviewInvitationDelivery::create([
                 'invitation_id' => $invitation->id,
                 'schedule_id' => $schedule->id,
                 'correlation_id' => $correlationId,
@@ -175,6 +176,7 @@ final class IssueReviewInvitationService
             return [
                 'schedule_id' => $schedule->id,
                 'invitation_id' => $invitation->id,
+                'delivery_id' => $delivery->id,
                 'email' => $email,
                 'display_name' => $displayName,
                 'show_title' => $performance->show->title,
@@ -232,9 +234,12 @@ final class IssueReviewInvitationService
             }
 
             $invitation->forceFill(['status' => 'sent', 'sent_at' => now()])->save();
-            ReviewInvitationDelivery::query()->where('invitation_id', $invitationId)->update([
-                'status' => 'sent', 'sent_at' => now(), 'error_code' => null, 'updated_at' => now(),
-            ]);
+            ReviewInvitationDelivery::query()
+                ->where('invitation_id', $invitationId)
+                ->where('status', 'pending')
+                ->update([
+                    'status' => 'sent', 'sent_at' => now(), 'error_code' => null, 'updated_at' => now(),
+                ]);
             $schedule->forceFill([
                 'status' => 'issued', 'issued_at' => now(), 'claimed_at' => null,
                 'last_error_code' => null,
@@ -251,13 +256,29 @@ final class IssueReviewInvitationService
         DB::transaction(function () use ($scheduleId, $invitationId): void {
             $schedule = ReviewInvitationSchedule::query()->lockForUpdate()->findOrFail($scheduleId);
             $invitation = ReviewInvitation::query()->lockForUpdate()->findOrFail($invitationId);
+            $delivery = ReviewInvitationDelivery::query()
+                ->where('invitation_id', $invitationId)
+                ->lockForUpdate()
+                ->firstOrFail();
+            if ($delivery->status === 'delivered') {
+                $invitation->forceFill(['status' => 'sent', 'sent_at' => $delivery->delivered_at ?? now()])->save();
+                $schedule->forceFill([
+                    'status' => 'issued', 'issued_at' => now(), 'claimed_at' => null,
+                    'last_error_code' => null,
+                ])->save();
+
+                return;
+            }
+            if (in_array($delivery->status, ['failed', 'complained'], true)) {
+                return;
+            }
             $invitation->forceFill([
                 'status' => 'revoked', 'revoked_at' => now(),
                 'revocation_reason' => 'delivery_failed',
             ])->save();
-            ReviewInvitationDelivery::query()->where('invitation_id', $invitationId)->update([
+            $delivery->forceFill([
                 'status' => 'failed', 'error_code' => 'mail_transport_failure', 'updated_at' => now(),
-            ]);
+            ])->save();
 
             $deadLettered = $schedule->attempts >= (int) config('encore.invitations.max_attempts');
             $schedule->forceFill([

@@ -12,5 +12,6 @@ interface ReviewInvitationSender
         string $showTitle,
         string $reviewUrl,
         DateTimeInterface $expiresAt,
+        string $deliveryId,
     ): void;
 }

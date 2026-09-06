@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\MailgunWebhookController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\TicketPal\PerformanceUpsertController;
 use App\Http\Controllers\Api\TicketPal\ReviewInvitationController;
@@ -9,6 +10,10 @@ use App\Http\Controllers\Api\V2\ReviewEligibilityController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/reviews', [ReviewController::class, 'store']);
+
+Route::post('/webhooks/mailgun', MailgunWebhookController::class)
+    ->middleware(['mailgun.webhooks.enabled', 'mailgun.webhooks.signature', 'throttle:120,1'])
+    ->name('webhooks.mailgun');
 
 Route::prefix('v2/integrations')->middleware(['provider.v2.enabled', 'provider.v2.auth'])->group(function (): void {
     Route::post('/catalogue/organisations', [CatalogueImportController::class, 'organisation'])

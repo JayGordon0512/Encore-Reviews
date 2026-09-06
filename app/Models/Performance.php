@@ -74,4 +74,14 @@ class Performance extends Model
             'audience_attendance_id',
         );
     }
+
+    public function invitationDeliveries(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            ReviewInvitationDelivery::class,
+            ReviewInvitation::class,
+            'performance_id',
+            'invitation_id',
+        );
+    }
 }

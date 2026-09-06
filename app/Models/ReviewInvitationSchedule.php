@@ -34,4 +34,9 @@ class ReviewInvitationSchedule extends Model
     {
         return $this->belongsTo(AudienceAttendance::class);
     }
+
+    public function eligibility(): BelongsTo
+    {
+        return $this->belongsTo(ReviewEligibility::class);
+    }
 }

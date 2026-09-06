@@ -8,12 +8,14 @@ use App\Jobs\IssueReviewInvitation;
 use App\Mail\ReviewInvitationMail;
 use App\Models\IntegrationCredential;
 use App\Models\IntegrationProvider;
+use App\Models\MailgunDeliveryEvent;
 use App\Models\Organisation;
 use App\Models\Performance;
 use App\Models\ProtectedReviewerContact;
 use App\Models\ReviewConsentEvidence;
 use App\Models\ReviewEligibility;
 use App\Models\ReviewInvitation;
+use App\Models\ReviewInvitationDelivery;
 use App\Models\ReviewInvitationSchedule;
 use App\Models\Show;
 use DateTimeInterface;
@@ -42,6 +44,9 @@ class InvitationDeliveryTest extends TestCase
             'encore.invitations.max_attempts' => 3,
             'encore.invitations.retry_delay_minutes' => 15,
             'encore.invitations.claim_timeout_minutes' => 5,
+            'encore.mailgun_webhooks.enabled' => false,
+            'encore.mailgun_webhooks.signing_key' => 'mailgun-webhook-test-key',
+            'encore.mailgun_webhooks.signature_tolerance_seconds' => 300,
         ]);
     }
 
@@ -78,6 +83,12 @@ class InvitationDeliveryTest extends TestCase
         $this->assertSame('sent', $invitation->status);
         $this->assertNotNull($invitation->sent_at);
         $this->assertNotSame(hash('sha256', $token), $invitation->token_hash);
+        $delivery = ReviewInvitationDelivery::sole();
+        $this->assertSame($delivery->id, $message->deliveryId);
+        $this->assertSame(
+            json_encode(['encore_delivery_id' => $delivery->id], JSON_THROW_ON_ERROR),
+            $message->headers()->text['X-Mailgun-Variables'],
+        );
         $this->assertDatabaseHas('review_invitation_schedules', ['id' => $schedule->id, 'status' => 'issued', 'attempts' => 1]);
         $this->assertDatabaseHas('review_invitation_deliveries', ['invitation_id' => $invitation->id, 'status' => 'sent']);
 
@@ -116,7 +127,7 @@ class InvitationDeliveryTest extends TestCase
         {
             public ?string $reviewUrl = null;
 
-            public function send(string $email, string $displayName, string $showTitle, string $reviewUrl, DateTimeInterface $expiresAt): void
+            public function send(string $email, string $displayName, string $showTitle, string $reviewUrl, DateTimeInterface $expiresAt, string $deliveryId): void
             {
                 $this->reviewUrl = $reviewUrl;
                 throw new RuntimeException('Simulated transport failure containing no retained customer data.');
@@ -149,7 +160,7 @@ class InvitationDeliveryTest extends TestCase
         {
             public int $sent = 0;
 
-            public function send(string $email, string $displayName, string $showTitle, string $reviewUrl, DateTimeInterface $expiresAt): void
+            public function send(string $email, string $displayName, string $showTitle, string $reviewUrl, DateTimeInterface $expiresAt, string $deliveryId): void
             {
                 $this->sent++;
             }
@@ -183,7 +194,7 @@ class InvitationDeliveryTest extends TestCase
         config(['encore.invitations.max_attempts' => 1]);
         $this->app->instance(ReviewInvitationSender::class, new class implements ReviewInvitationSender
         {
-            public function send(string $email, string $displayName, string $showTitle, string $reviewUrl, DateTimeInterface $expiresAt): void
+            public function send(string $email, string $displayName, string $showTitle, string $reviewUrl, DateTimeInterface $expiresAt, string $deliveryId): void
             {
                 throw new RuntimeException('Simulated terminal mail outage.');
             }
@@ -195,6 +206,153 @@ class InvitationDeliveryTest extends TestCase
         $this->assertSame('dead_lettered', $schedule->status);
         $this->assertSame('mail_transport_failure', $schedule->last_error_code);
         $this->assertNotNull($schedule->dead_lettered_at);
+    }
+
+    public function test_mailgun_webhooks_are_disabled_by_default_and_require_a_valid_signature(): void
+    {
+        $payload = $this->mailgunPayload((string) Str::uuid(), 'delivered');
+
+        $this->postJson(route('webhooks.mailgun'), $payload)->assertNotFound();
+
+        config(['encore.mailgun_webhooks.enabled' => true]);
+        $payload['signature']['signature'] = str_repeat('0', 64);
+        $this->postJson(route('webhooks.mailgun'), $payload)->assertUnauthorized();
+
+        $payload = $this->mailgunPayload((string) Str::uuid(), 'delivered', timestamp: now()->subMinutes(10)->timestamp);
+        $this->postJson(route('webhooks.mailgun'), $payload)->assertUnauthorized();
+        $this->assertDatabaseCount('mailgun_delivery_events', 0);
+    }
+
+    public function test_signed_mailgun_delivery_feedback_is_applied_once_without_persisting_the_recipient(): void
+    {
+        $this->createSchedule();
+        Mail::fake();
+        $this->app->make(IssueReviewInvitationService::class)->issue(ReviewInvitationSchedule::sole()->id);
+        $delivery = ReviewInvitationDelivery::sole();
+        config(['encore.mailgun_webhooks.enabled' => true]);
+        $payload = $this->mailgunPayload($delivery->id, 'delivered');
+        $payload['event-data']['recipient'] = 'reviewer@example.test';
+
+        $this->postJson(route('webhooks.mailgun'), $payload)
+            ->assertAccepted()
+            ->assertJsonPath('outcome', 'applied');
+        $this->postJson(route('webhooks.mailgun'), $payload)
+            ->assertAccepted()
+            ->assertJsonPath('outcome', 'replayed');
+
+        $delivery->refresh();
+        $this->assertSame('delivered', $delivery->status);
+        $this->assertNotNull($delivery->delivered_at);
+        $this->assertDatabaseCount('mailgun_delivery_events', 1);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'review_invitation.delivery_feedback_received',
+            'entity_id' => $delivery->id,
+        ]);
+        $persisted = json_encode([
+            MailgunDeliveryEvent::all()->toArray(),
+            DB::table('audit_logs')->where('action', 'review_invitation.delivery_feedback_received')->get()->all(),
+        ], JSON_THROW_ON_ERROR);
+        $this->assertStringNotContainsString('reviewer@example.test', $persisted);
+    }
+
+    public function test_fast_mailgun_delivery_feedback_is_not_overwritten_by_the_sending_worker(): void
+    {
+        $schedule = $this->createSchedule();
+        config(['encore.mailgun_webhooks.enabled' => true]);
+        $callback = function (string $deliveryId): void {
+            $this->postJson(route('webhooks.mailgun'), $this->mailgunPayload($deliveryId, 'delivered'))
+                ->assertAccepted()
+                ->assertJsonPath('outcome', 'applied');
+        };
+        $this->app->instance(ReviewInvitationSender::class, new class($callback) implements ReviewInvitationSender
+        {
+            public function __construct(private readonly \Closure $callback) {}
+
+            public function send(string $email, string $displayName, string $showTitle, string $reviewUrl, DateTimeInterface $expiresAt, string $deliveryId): void
+            {
+                ($this->callback)($deliveryId);
+            }
+        });
+
+        $this->app->make(IssueReviewInvitationService::class)->issue($schedule->id);
+
+        $this->assertSame('delivered', ReviewInvitationDelivery::sole()->status);
+        $this->assertSame('sent', ReviewInvitation::sole()->status);
+        $this->assertSame('issued', $schedule->fresh()->status);
+    }
+
+    public function test_mailgun_complaint_suppresses_the_contact_and_cannot_be_overwritten(): void
+    {
+        $schedule = $this->createSchedule();
+        Mail::fake();
+        $this->app->make(IssueReviewInvitationService::class)->issue($schedule->id);
+        $delivery = ReviewInvitationDelivery::sole();
+        $invitation = $delivery->invitation;
+        $contact = $invitation->eligibility->contact;
+        config(['encore.mailgun_webhooks.enabled' => true]);
+        $complainedAt = now()->subSecond()->timestamp;
+
+        $this->postJson(route('webhooks.mailgun'), $this->mailgunPayload($delivery->id, 'complained', timestamp: $complainedAt))
+            ->assertAccepted()
+            ->assertJsonPath('outcome', 'applied');
+        $this->postJson(route('webhooks.mailgun'), $this->mailgunPayload($delivery->id, 'delivered'))
+            ->assertAccepted()
+            ->assertJsonPath('outcome', 'ignored_terminal');
+
+        $this->assertSame('complained', $delivery->fresh()->status);
+        $this->assertSame('complained', $contact->fresh()->status);
+        $this->assertSame('revoked', $invitation->fresh()->status);
+        $this->assertSame('mailgun_complaint', $invitation->fresh()->revocation_reason);
+        $this->assertDatabaseCount('mailgun_delivery_events', 2);
+    }
+
+    public function test_mailgun_permanent_and_temporary_failures_have_distinct_outcomes(): void
+    {
+        $schedule = $this->createSchedule();
+        Mail::fake();
+        $this->app->make(IssueReviewInvitationService::class)->issue($schedule->id);
+        $delivery = ReviewInvitationDelivery::sole();
+        config(['encore.mailgun_webhooks.enabled' => true]);
+
+        $this->postJson(route('webhooks.mailgun'), $this->mailgunPayload($delivery->id, 'failed', 'temporary'))
+            ->assertAccepted()
+            ->assertJsonPath('outcome', 'applied');
+        $this->assertSame('temporarily_failed', $delivery->fresh()->status);
+        $this->assertSame('active', $delivery->invitation->eligibility->contact->fresh()->status);
+
+        $this->postJson(route('webhooks.mailgun'), $this->mailgunPayload($delivery->id, 'failed', 'permanent'))
+            ->assertAccepted()
+            ->assertJsonPath('outcome', 'applied');
+        $this->assertSame('failed', $delivery->fresh()->status);
+        $this->assertSame('undeliverable', $delivery->invitation->eligibility->contact->fresh()->status);
+        $this->assertSame('mailgun_permanent_failure', $delivery->invitation->fresh()->revocation_reason);
+    }
+
+    /** @return array<string, mixed> */
+    private function mailgunPayload(
+        string $deliveryId,
+        string $eventType,
+        ?string $severity = null,
+        ?int $timestamp = null,
+    ): array {
+        $timestamp ??= now()->timestamp;
+        $token = 'mailgun-token-'.Str::random(24);
+
+        return [
+            'signature' => [
+                'timestamp' => (string) $timestamp,
+                'token' => $token,
+                'signature' => hash_hmac('sha256', $timestamp.$token, 'mailgun-webhook-test-key'),
+            ],
+            'event-data' => array_filter([
+                'id' => (string) Str::uuid(),
+                'event' => $eventType,
+                'timestamp' => $timestamp,
+                'severity' => $severity,
+                'delivery-status' => ['code' => $severity === 'permanent' ? 550 : 421],
+                'user-variables' => ['encore_delivery_id' => $deliveryId],
+            ], fn (mixed $value): bool => $value !== null),
+        ];
     }
 
     private function createSchedule(): ReviewInvitationSchedule

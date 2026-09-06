@@ -165,6 +165,45 @@ depth, `review_invitation_schedules.status = dead_lettered`, and
 `failed_jobs`. Resolve the mail or configuration cause before rescheduling a
 dead letter; never edit an invitation token digest or contact ciphertext.
 
+### Mailgun delivery feedback
+
+Delivery, failure and complaint webhooks are independently disabled by default.
+Create a dedicated Mailgun webhook signing key configuration and apply it to the
+web runtime only:
+
+```dotenv
+ENCORE_MAILGUN_WEBHOOKS_ENABLED=false
+MAILGUN_WEBHOOK_SIGNING_KEY=<mailgun-http-webhook-signing-key>
+ENCORE_MAILGUN_WEBHOOK_SIGNATURE_TOLERANCE=300
+```
+
+Configure Mailgun's delivered, failed and complained events to POST to:
+
+```text
+https://staging.encorereviews.co.uk/api/webhooks/mailgun
+```
+
+Encore verifies Mailgun's timestamp/token signature before processing, rejects
+stale signatures, and stores a digest of each signing token plus Mailgun event
+ID for replay protection. The email carries only Encore's delivery UUID in the
+`X-Mailgun-Variables` metadata; webhook payload recipients and free-text failure
+descriptions are never persisted.
+
+Before enabling the endpoint, confirm the signing key is the HTTP webhook
+signing key rather than an SMTP password or API key. Enable the endpoint only
+after the new migration is applied. Send one controlled invitation and verify:
+
+1. the delivery record moves from `sent` to `delivered`;
+2. replaying the same signed event creates no second receipt;
+3. a permanent failure marks the protected contact undeliverable;
+4. a complaint suppresses that contact and revokes its unused invitation;
+5. event-management counts expose status totals without recipient identity.
+
+Disable `ENCORE_MAILGUN_WEBHOOKS_ENABLED` immediately if signature failures or
+unexpected event volume occur. Disabling feedback does not disable outbound
+mail, so use the separate organiser/provider issuing gates when sending must
+also stop.
+
 Keep `ENCORE_PROVIDER_V2_INVITATION_ISSUING_ENABLED=false` until the supervised
 processes, mail sender identity, monitoring, keys and controlled staging journey
 have all been verified.

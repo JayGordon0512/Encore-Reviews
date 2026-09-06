@@ -150,6 +150,9 @@ class ManualEventController extends Controller
                         ->where('review_invitation_schedules.status', 'suppressed')
                         ->where('review_invitation_schedules.suppression_reason', 'organiser_invitation_issuing_disabled'),
                     'invitationSchedules as invitation_attention_count' => fn ($query) => $query->where('review_invitation_schedules.status', 'dead_lettered'),
+                    'invitationDeliveries as delivery_delivered_count' => fn ($query) => $query->where('review_invitation_deliveries.status', 'delivered'),
+                    'invitationDeliveries as delivery_failed_count' => fn ($query) => $query->whereIn('review_invitation_deliveries.status', ['failed', 'temporarily_failed']),
+                    'invitationDeliveries as delivery_complained_count' => fn ($query) => $query->where('review_invitation_deliveries.status', 'complained'),
                     'invitationSchedules as invitation_stopped_count' => fn ($query) => $query
                         ->where(function ($query): void {
                             $query->where('review_invitation_schedules.status', 'cancelled')

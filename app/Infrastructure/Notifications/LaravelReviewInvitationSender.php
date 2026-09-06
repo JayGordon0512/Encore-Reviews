@@ -15,12 +15,14 @@ final class LaravelReviewInvitationSender implements ReviewInvitationSender
         string $showTitle,
         string $reviewUrl,
         DateTimeInterface $expiresAt,
+        string $deliveryId,
     ): void {
         Mail::to($email)->send(new ReviewInvitationMail(
             $displayName,
             $showTitle,
             $reviewUrl,
             $expiresAt,
+            $deliveryId,
         ));
     }
 }

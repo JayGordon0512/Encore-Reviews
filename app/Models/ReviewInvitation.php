@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class ReviewInvitation extends Model
 {
@@ -58,6 +59,11 @@ class ReviewInvitation extends Model
     public function audienceAttendance(): BelongsTo
     {
         return $this->belongsTo(AudienceAttendance::class);
+    }
+
+    public function delivery(): HasOne
+    {
+        return $this->hasOne(ReviewInvitationDelivery::class, 'invitation_id');
     }
 
     public function scopeAvailable(Builder $query): void

@@ -48,6 +48,12 @@ return [
         'max_size_kb' => (int) env('ENCORE_EVENT_IMAGE_MAX_SIZE_KB', 5120),
     ],
 
+    'mailgun_webhooks' => [
+        'enabled' => (bool) env('ENCORE_MAILGUN_WEBHOOKS_ENABLED', false),
+        'signing_key' => env('MAILGUN_WEBHOOK_SIGNING_KEY'),
+        'signature_tolerance_seconds' => (int) env('ENCORE_MAILGUN_WEBHOOK_SIGNATURE_TOLERANCE', 300),
+    ],
+
     'ticketpal' => [
         'organiser_login_url' => env('ENCORE_TICKETPAL_ORGANISER_LOGIN_URL', 'https://ticketpal.co.uk/login'),
         'secret' => env('ENCORE_TICKETPAL_SECRET'),

@@ -76,6 +76,9 @@
                 <span><strong>{{ $performance->audience_attendances_count }}</strong> customers</span>
                 @if($performance->invitation_scheduled_count)<span><strong>{{ $performance->invitation_scheduled_count }}</strong> scheduled</span>@endif
                 @if($performance->invitation_issued_count)<span><strong>{{ $performance->invitation_issued_count }}</strong> sent</span>@endif
+                @if($performance->delivery_delivered_count)<span><strong>{{ $performance->delivery_delivered_count }}</strong> delivered</span>@endif
+                @if($performance->delivery_failed_count)<span class="er-invitationMetrics__attention"><strong>{{ $performance->delivery_failed_count }}</strong> delivery failed</span>@endif
+                @if($performance->delivery_complained_count)<span class="er-invitationMetrics__attention"><strong>{{ $performance->delivery_complained_count }}</strong> complained</span>@endif
                 @if($performance->invitation_held_count)<span><strong>{{ $performance->invitation_held_count }}</strong> held</span>@endif
                 @if($performance->invitation_attention_count)<span class="er-invitationMetrics__attention"><strong>{{ $performance->invitation_attention_count }}</strong> need attention</span>@endif
                 @if($performance->invitation_stopped_count)<span><strong>{{ $performance->invitation_stopped_count }}</strong> stopped</span>@endif

@@ -151,6 +151,10 @@ html{ scroll-padding-top: 82px; }
   pointer-events:none;
 }
 
+.er-hero--show::after{
+  background: linear-gradient(90deg, rgba(10,29,59,0.72), rgba(10,29,59,0.50));
+}
+
 .er-hero--image .er-container{
   position: relative;
   z-index: 1;

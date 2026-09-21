@@ -68,7 +68,7 @@ class ProviderV2ContractHttpTest extends TestCase
                 $this->assertDatabaseHas('review_invitation_schedules', [
                     'eligibility_id' => '55555555-5555-4555-8555-555555555555',
                     'status' => 'suppressed',
-                    'suppression_reason' => 'invitation_issuing_disabled',
+                    'suppression_reason' => 'attendance_pending',
                 ]);
             }
         }

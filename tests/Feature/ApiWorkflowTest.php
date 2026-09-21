@@ -69,6 +69,7 @@ class ApiWorkflowTest extends TestCase
     public function test_ticketpal_invitation_creation_and_review_submission(): void
     {
         Config::set('encore.ticketpal.secret', 'test-secret');
+        Config::set('encore.ticketpal.legacy_invitation_enabled', true);
 
         $show = Show::create([
             'title' => 'Audience Review Show',
@@ -150,6 +151,7 @@ class ApiWorkflowTest extends TestCase
     public function test_review_submission_rejects_email_that_does_not_match_invitation(): void
     {
         Config::set('encore.ticketpal.secret', 'test-secret');
+        Config::set('encore.ticketpal.legacy_invitation_enabled', true);
 
         $show = Show::create([
             'title' => 'Email Match Show',

@@ -2,6 +2,7 @@
 
 namespace App\Application\Catalogue;
 
+use App\Application\Invitations\ReconcileProviderPerformanceSchedules;
 use App\Domain\Integration\ProviderAuthority;
 use App\Models\IntegrationIdempotencyRecord;
 use App\Models\IntegrationOrganisationMapping;
@@ -21,6 +22,8 @@ use RuntimeException;
 
 final class ProviderV2CatalogueImportService
 {
+    public function __construct(private readonly ReconcileProviderPerformanceSchedules $scheduleReconciler) {}
+
     /** @param array<string, mixed> $payload
      * @return array<string, mixed>
      */
@@ -277,6 +280,7 @@ final class ProviderV2CatalogueImportService
                     ]);
                 } else {
                     $performance->update($attributes);
+                    $this->scheduleReconciler->reconcile($performance->fresh(), $correlationId);
                 }
 
                 return $this->accepted('performance', $created, $mapping->id, $correlationId, [

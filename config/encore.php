@@ -52,9 +52,11 @@ return [
         'enabled' => (bool) env('ENCORE_MAILGUN_WEBHOOKS_ENABLED', false),
         'signing_key' => env('MAILGUN_WEBHOOK_SIGNING_KEY'),
         'signature_tolerance_seconds' => (int) env('ENCORE_MAILGUN_WEBHOOK_SIGNATURE_TOLERANCE', 300),
+        'temporary_retry_delay_minutes' => (int) env('ENCORE_MAILGUN_TEMPORARY_RETRY_DELAY_MINUTES', 60),
     ],
 
     'ticketpal' => [
+        'legacy_invitation_enabled' => (bool) env('ENCORE_TICKETPAL_LEGACY_INVITATION_ENABLED', false),
         'organiser_login_url' => env('ENCORE_TICKETPAL_ORGANISER_LOGIN_URL', 'https://ticketpal.co.uk/login'),
         'secret' => env('ENCORE_TICKETPAL_SECRET'),
         'signature_tolerance_seconds' => (int) env('ENCORE_TICKETPAL_SIGNATURE_TOLERANCE', 300),

@@ -20,6 +20,7 @@ class ProviderReplayProtectionTest extends TestCase
         parent::setUp();
 
         Config::set('encore.ticketpal.secret', 'test-secret');
+        Config::set('encore.ticketpal.legacy_invitation_enabled', true);
         Config::set('encore.ticketpal.signature_tolerance_seconds', 300);
     }
 
@@ -74,6 +75,18 @@ class ProviderReplayProtectionTest extends TestCase
         $this->assertSame('processed', $event->status);
         $this->assertSame(1, $event->attempts);
         $this->assertStringNotContainsString($first->json('invitation.token'), $event->response_body);
+    }
+
+    public function test_legacy_direct_invitation_endpoint_is_disabled_by_default(): void
+    {
+        Config::set('encore.ticketpal.legacy_invitation_enabled', false);
+
+        $this->postTicketPalJson('/api/ticketpal/invitations', [
+            'performance_id' => (string) \Illuminate\Support\Str::uuid(),
+            'email' => 'legacy@example.test',
+        ], 'legacy-disabled')->assertNotFound();
+
+        $this->assertDatabaseCount('review_invitations', 0);
     }
 
     public function test_event_id_reuse_with_a_different_payload_is_rejected(): void

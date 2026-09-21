@@ -330,7 +330,7 @@ final class IssueReviewInvitationService
                 $query->lockForUpdate();
             }
             $eligibility = $query->find($schedule->eligibility_id);
-            if (! $eligibility || $eligibility->status !== 'eligible') {
+            if (! $eligibility || $eligibility->status !== 'verified_eligible') {
                 return null;
             }
 

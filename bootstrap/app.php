@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\AuthenticateProviderV2Request;
 use App\Http\Middleware\EnsureActiveAdmin;
+use App\Http\Middleware\EnsureLegacyTicketPalInvitationEnabled;
 use App\Http\Middleware\EnsureMailgunWebhooksEnabled;
 use App\Http\Middleware\EnsureProviderV2Enabled;
 use App\Http\Middleware\EnsureSuperAdmin;
@@ -27,6 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'ticketpal.secret' => VerifyTicketPalSecret::class,
             'ticketpal.event' => VerifyTicketPalEvent::class,
+            'ticketpal.legacy-invitations' => EnsureLegacyTicketPalInvitationEnabled::class,
             'admin.active' => EnsureActiveAdmin::class,
             'super_admin' => EnsureSuperAdmin::class,
             'provider.v2.enabled' => EnsureProviderV2Enabled::class,

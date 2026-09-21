@@ -72,6 +72,49 @@ final class ReviewEligibilityController extends Controller
         return $this->result($request, $result);
     }
 
+    public function lifecycle(Request $request): JsonResponse
+    {
+        $authority = $request->attributes->get('provider_authority');
+        assert($authority instanceof ProviderAuthority);
+        $validator = Validator::make($request->json()->all(), [
+            'event_id' => ['required', 'uuid'],
+            'schema_version' => ['required', Rule::in(['2.1'])],
+            'occurred_at' => ['required', 'date'],
+            'provider' => ['required', Rule::in([$authority->providerSlug])],
+            'provider_booking_id' => ['required', 'string', 'max:100'],
+            'event_type' => ['required', Rule::in([
+                'eligibility_updated', 'eligibility_revoked', 'attendance_confirmed',
+                'admission_quantity_changed', 'performance_changed',
+            ])],
+            'reason' => ['nullable', 'required_if:event_type,eligibility_revoked', 'string', 'max:100'],
+            'admission_quantity' => [
+                'nullable', 'required_if:event_type,admission_quantity_changed',
+                'integer', 'min:1', 'max:100',
+            ],
+            'provider_show_id' => ['nullable', 'required_if:event_type,performance_changed', 'string', 'max:100'],
+            'provider_performance_id' => ['nullable', 'required_if:event_type,performance_changed', 'string', 'max:100'],
+        ]);
+        if ($validator->fails()) {
+            return $this->validationFailure($request, $validator->errors()->toArray());
+        }
+
+        try {
+            $result = $this->service->lifecycle(
+                $authority, $validator->validated(), (string) $request->header('Idempotency-Key'),
+                $request->attributes->get('body_digest'), $request->attributes->get('correlation_id'),
+            );
+        } catch (RuntimeException $exception) {
+            if ($exception->getMessage() === 'The replacement performance mapping could not be resolved.') {
+                return $this->result($request, ['error' => 'mapping_not_found']);
+            }
+
+            return $this->error($request, 'temporarily_unavailable',
+                'The provider operation is temporarily unavailable.', 503);
+        }
+
+        return $this->result($request, $result);
+    }
+
     /** @param array<string, mixed> $result */
     private function result(Request $request, array $result): JsonResponse
     {
@@ -83,6 +126,12 @@ final class ReviewEligibilityController extends Controller
                 'message' => 'A required provider resource mapping could not be resolved.',
                 'correlation_id' => $request->attributes->get('correlation_id'),
                 'details' => [['field' => 'provider_performance_id', 'code' => 'mapping_not_found']],
+            ], 422),
+            'eligibility_not_found' => response()->json([
+                'error' => 'validation_failed',
+                'message' => 'The provider booking has no active review eligibility.',
+                'correlation_id' => $request->attributes->get('correlation_id'),
+                'details' => [['field' => 'provider_booking_id', 'code' => 'eligibility_not_found']],
             ], 422),
             default => response()->json($result, 202),
         };

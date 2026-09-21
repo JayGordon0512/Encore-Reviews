@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Encore Reviews Provider API
-  version: 2.0.0-proposed.1
+  version: 2.1.0
   description: >-
     Proposed provider-neutral Release 1 contract for consented review eligibility
     and withdrawal. TicketPal is the first provider. Acceptance records work for
@@ -20,7 +20,9 @@ paths:
       tags: [Review eligibility]
       summary: Accept consented eligibility evidence
       description: >-
-        Accepts evidence for one paid booking with current encore_review consent.
+        Accepts evidence for one successfully completed paid booking or genuine
+        free registration with current encore_review consent. This creates an
+        ELIGIBLE_PENDING_ATTENDANCE candidate; it does not prove attendance.
         Encore resolves provider identifiers through credential-scoped mappings.
         A 202 response does not mean an invitation has been issued or delivered.
       security:
@@ -112,6 +114,46 @@ paths:
       x-encore-signature-canonicalization: |-
         METHOD + "\n" + ABSOLUTE_PATH + "\n" + X-Request-Timestamp + "\n" +
         X-Request-Nonce + "\n" + lowercase_hex(SHA256(raw_request_body))
+
+  /integrations/review-eligibility-lifecycle-events:
+    post:
+      operationId: applyReviewEligibilityLifecycleV21
+      tags: [Review eligibility]
+      summary: Apply an idempotent booking or attendance lifecycle fact
+      description: >-
+        Synchronises provider-authoritative changes after candidate creation.
+        attendance_confirmed changes the candidate to VERIFIED_ELIGIBLE. Refund,
+        cancellation, quantity and performance changes disclose no extra PII.
+      security:
+        - ProviderHmac: []
+      parameters:
+        - $ref: '#/components/parameters/ProviderKeyId'
+        - $ref: '#/components/parameters/RequestTimestamp'
+        - $ref: '#/components/parameters/RequestNonce'
+        - $ref: '#/components/parameters/RequestSignature'
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LifecycleRequest'
+      responses:
+        '202':
+          description: New or duplicate-identical lifecycle operation accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LifecycleAccepted'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorised' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/IdempotencyConflict' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '503': { $ref: '#/components/responses/TemporarilyUnavailable' }
+      x-encore-required-operation-scope: review-eligibility-lifecycle:write
 
 components:
   securitySchemes:
@@ -293,6 +335,24 @@ components:
           type: string
           format: date-time
 
+    LifecycleRequest:
+      type: object
+      additionalProperties: false
+      required: [event_id, schema_version, occurred_at, provider, provider_booking_id, event_type]
+      properties:
+        event_id: { type: string, format: uuid }
+        schema_version: { type: string, const: '2.1' }
+        occurred_at: { type: string, format: date-time }
+        provider: { type: string, const: ticketpal }
+        provider_booking_id: { type: string, minLength: 1, maxLength: 100 }
+        event_type:
+          type: string
+          enum: [eligibility_updated, eligibility_revoked, attendance_confirmed, admission_quantity_changed, performance_changed]
+        reason: { type: [string, 'null'], maxLength: 100 }
+        admission_quantity: { type: [integer, 'null'], minimum: 1, maximum: 100 }
+        provider_show_id: { type: [string, 'null'], maxLength: 100 }
+        provider_performance_id: { type: [string, 'null'], maxLength: 100 }
+
     EligibilityAccepted:
       type: object
       additionalProperties: false
@@ -310,6 +370,19 @@ components:
         correlation_id:
           type: string
           format: uuid
+
+    LifecycleAccepted:
+      type: object
+      additionalProperties: false
+      required: [status, event_id, eligibility_id, eligibility_status, correlation_id]
+      properties:
+        status: { type: string, enum: [accepted, duplicate] }
+        event_id: { type: string, format: uuid }
+        eligibility_id: { type: string, format: uuid }
+        eligibility_status:
+          type: string
+          enum: [eligible_pending_attendance, verified_eligible, revoked, withdrawn]
+        correlation_id: { type: string, format: uuid }
 
     WithdrawalAccepted:
       type: object

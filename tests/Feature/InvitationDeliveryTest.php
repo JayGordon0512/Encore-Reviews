@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Application\Invitations\IssueReviewInvitationService;
+use App\Application\Invitations\ReconcileProviderPerformanceSchedules;
 use App\Contracts\ReviewInvitationSender;
 use App\Jobs\IssueReviewInvitation;
 use App\Mail\ReviewInvitationMail;
@@ -47,6 +48,7 @@ class InvitationDeliveryTest extends TestCase
             'encore.mailgun_webhooks.enabled' => false,
             'encore.mailgun_webhooks.signing_key' => 'mailgun-webhook-test-key',
             'encore.mailgun_webhooks.signature_tolerance_seconds' => 300,
+            'encore.mailgun_webhooks.temporary_retry_delay_minutes' => 60,
         ]);
     }
 
@@ -208,6 +210,54 @@ class InvitationDeliveryTest extends TestCase
         $this->assertNotNull($schedule->dead_lettered_at);
     }
 
+    public function test_verified_provider_schedule_requires_explicit_idempotent_release(): void
+    {
+        $schedule = $this->createSchedule();
+        $schedule->update([
+            'status' => 'suppressed',
+            'suppression_reason' => 'invitation_issuing_disabled',
+        ]);
+        config(['encore.provider_v2.invitation_issuing_enabled' => false]);
+
+        $this->artisan('encore:invitations:release-held-provider')
+            ->expectsOutputToContain('Dry run: 1 verified held provider invitation(s)')
+            ->assertSuccessful();
+        $this->assertSame('suppressed', $schedule->fresh()->status);
+        $this->artisan('encore:invitations:release-held-provider', ['--commit' => true])->assertFailed();
+
+        config(['encore.provider_v2.invitation_issuing_enabled' => true]);
+        $this->artisan('encore:invitations:release-held-provider', ['--commit' => true])
+            ->expectsOutputToContain('1 provider invitation(s) released')
+            ->assertSuccessful();
+        $this->assertSame('scheduled', $schedule->fresh()->status);
+
+        $this->artisan('encore:invitations:release-held-provider', ['--commit' => true])
+            ->expectsOutputToContain('0 provider invitation(s) released')
+            ->assertSuccessful();
+    }
+
+    public function test_provider_performance_changes_recalculate_pending_schedules_and_cancellation_stops_them(): void
+    {
+        $schedule = $this->createSchedule();
+        $performance = $schedule->eligibility->performance;
+        $performance->update([
+            'starts_at' => now()->addDays(2),
+            'ends_at' => now()->addDays(2)->addHours(2),
+            'status' => 'scheduled',
+        ]);
+
+        $reconciler = $this->app->make(ReconcileProviderPerformanceSchedules::class);
+        $reconciler->reconcile($performance->fresh(), (string) Str::uuid());
+        $this->assertTrue(
+            $schedule->fresh()->scheduled_for->equalTo($performance->fresh()->ends_at->addHour()),
+        );
+
+        $performance->update(['status' => 'cancelled']);
+        $reconciler->reconcile($performance->fresh(), (string) Str::uuid());
+        $this->assertSame('cancelled', $schedule->fresh()->status);
+        $this->assertSame('performance_cancelled', $schedule->fresh()->suppression_reason);
+    }
+
     public function test_mailgun_webhooks_are_disabled_by_default_and_require_a_valid_signature(): void
     {
         $payload = $this->mailgunPayload((string) Str::uuid(), 'delivered');
@@ -318,6 +368,9 @@ class InvitationDeliveryTest extends TestCase
             ->assertAccepted()
             ->assertJsonPath('outcome', 'applied');
         $this->assertSame('temporarily_failed', $delivery->fresh()->status);
+        $this->assertSame('scheduled', $schedule->fresh()->status);
+        $this->assertSame('mailgun_temporary_failure', $schedule->fresh()->last_error_code);
+        $this->assertSame('revoked', $delivery->invitation->fresh()->status);
         $this->assertSame('active', $delivery->invitation->eligibility->contact->fresh()->status);
 
         $this->postJson(route('webhooks.mailgun'), $this->mailgunPayload($delivery->id, 'failed', 'permanent'))
@@ -418,7 +471,8 @@ class InvitationDeliveryTest extends TestCase
             'provider_booking_id' => 'booking-1',
             'purpose' => 'encore_review',
             'admission_quantity' => 2,
-            'status' => 'eligible',
+            'status' => 'verified_eligible',
+            'verified_at' => now()->subHour(),
             'occurred_at' => now()->subDay(),
         ]);
 

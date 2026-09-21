@@ -12,6 +12,7 @@ use App\Models\OutboxMessage;
 use App\Models\ProtectedReviewerContact;
 use App\Models\ReviewConsentEvidence;
 use App\Models\ReviewEligibility;
+use App\Models\ReviewEligibilityLifecycleEvent;
 use App\Models\ReviewEligibilityWithdrawal;
 use App\Models\ReviewInvitation;
 use App\Models\ReviewInvitationSchedule;
@@ -97,7 +98,7 @@ final class ProviderV2ReviewEligibilityService
                 'provider_booking_id' => $payload['provider_booking_id'],
                 'purpose' => $payload['consent']['purpose'],
                 'admission_quantity' => $payload['admission_quantity'],
-                'status' => 'eligible',
+                'status' => 'eligible_pending_attendance',
                 'occurred_at' => $payload['occurred_at'],
             ]);
             $performance = $mapping->performance()->firstOrFail();
@@ -110,10 +111,8 @@ final class ProviderV2ReviewEligibilityService
                 'source' => 'provider_v2',
                 'correlation_id' => $correlationId,
                 'scheduled_for' => $scheduleAt,
-                'status' => config('encore.provider_v2.invitation_issuing_enabled') ? 'scheduled' : 'suppressed',
-                'suppression_reason' => config('encore.provider_v2.invitation_issuing_enabled')
-                    ? null
-                    : 'invitation_issuing_disabled',
+                'status' => 'suppressed',
+                'suppression_reason' => 'attendance_pending',
             ]);
             $this->outbox('ReviewEligibilityAccepted', 'ReviewEligibility', $eligibility->id,
                 $mapping->organisation_id, $authority, $correlationId, ['eligibility_id' => $eligibility->id]);
@@ -198,6 +197,163 @@ final class ProviderV2ReviewEligibilityService
         });
     }
 
+    /** @param array<string, mixed> $payload
+     * @return array<string, mixed>
+     */
+    public function lifecycle(ProviderAuthority $authority, array $payload, string $idempotencyKey, string $digest, string $correlationId): array
+    {
+        return DB::transaction(function () use ($authority, $payload, $idempotencyKey, $digest, $correlationId): array {
+            $existing = $this->idempotency($authority, 'review-eligibility-lifecycle:write', $idempotencyKey);
+            if ($existing) {
+                return $this->existingLifecycleOutcome($existing, $digest, $correlationId);
+            }
+
+            $eligibility = ReviewEligibility::query()
+                ->where('provider_id', $authority->credential->provider_id)
+                ->where('account_reference', $authority->accountReference)
+                ->where('provider_booking_id', $payload['provider_booking_id'])
+                ->where('purpose', 'encore_review')
+                ->lockForUpdate()
+                ->first();
+            if (! $eligibility) {
+                return ['error' => 'eligibility_not_found'];
+            }
+
+            $record = $this->reserveIdempotency(
+                $authority,
+                'review-eligibility-lifecycle:write',
+                $idempotencyKey,
+                $digest,
+                $correlationId,
+            );
+            if (is_array($record)) {
+                return $record;
+            }
+
+            $eventType = $payload['event_type'];
+            $mapping = null;
+            if ($eventType === 'performance_changed') {
+                $mapping = IntegrationPerformanceMapping::query()
+                    ->with('showMapping')
+                    ->where('provider_id', $authority->credential->provider_id)
+                    ->where('account_reference', $authority->accountReference)
+                    ->where('external_performance_id', $payload['provider_performance_id'])
+                    ->first();
+                if (! $mapping || $mapping->showMapping?->external_show_id !== $payload['provider_show_id']
+                    || ! $authority->credential->organisations()->whereKey($mapping->organisation_id)->exists()) {
+                    throw new RuntimeException('The replacement performance mapping could not be resolved.');
+                }
+            }
+
+            if (in_array($eventType, ['eligibility_updated', 'admission_quantity_changed'], true)
+                && array_key_exists('admission_quantity', $payload)) {
+                $eligibility->admission_quantity = $payload['admission_quantity'];
+            } elseif ($eventType === 'attendance_confirmed') {
+                $eligibility->status = 'verified_eligible';
+                $eligibility->verified_at = $payload['occurred_at'];
+                if (array_key_exists('admission_quantity', $payload)) {
+                    $eligibility->admission_quantity = $payload['admission_quantity'];
+                }
+            } elseif ($eventType === 'performance_changed' && $mapping) {
+                $this->revokeUnusedInvitations($eligibility, 'performance_changed');
+                $eligibility->forceFill([
+                    'organisation_id' => $mapping->organisation_id,
+                    'show_id' => $mapping->show_id,
+                    'performance_id' => $mapping->performance_id,
+                    'admission_quantity' => $payload['admission_quantity'] ?? $eligibility->admission_quantity,
+                ]);
+            } elseif ($eventType === 'eligibility_revoked') {
+                $eligibility->forceFill([
+                    'status' => 'revoked',
+                    'revoked_at' => $payload['occurred_at'],
+                    'revocation_reason' => $payload['reason'],
+                ]);
+                $this->cancelSchedule($eligibility, $payload['reason']);
+                $this->revokeUnusedInvitations($eligibility, $payload['reason']);
+            }
+            $eligibility->occurred_at = $payload['occurred_at'];
+            $eligibility->save();
+            if (in_array($eventType, ['attendance_confirmed', 'performance_changed'], true)) {
+                $this->scheduleEligibleInvitation($eligibility, $correlationId);
+            }
+
+            $event = ReviewEligibilityLifecycleEvent::create([
+                'provider_id' => $authority->credential->provider_id,
+                'credential_id' => $authority->credential->id,
+                'eligibility_id' => $eligibility->id,
+                'account_reference' => $authority->accountReference,
+                'provider_event_id' => $payload['event_id'],
+                'provider_booking_id' => $payload['provider_booking_id'],
+                'event_type' => $eventType,
+                'reason' => $payload['reason'] ?? null,
+                'admission_quantity' => $payload['admission_quantity'] ?? null,
+                'provider_show_id' => $payload['provider_show_id'] ?? null,
+                'provider_performance_id' => $payload['provider_performance_id'] ?? null,
+                'occurred_at' => $payload['occurred_at'],
+                'created_at' => now(),
+            ]);
+            $this->outbox('ReviewEligibilityLifecycleApplied', 'ReviewEligibility', $eligibility->id,
+                $eligibility->organisation_id, $authority, $correlationId,
+                ['eligibility_id' => $eligibility->id, 'lifecycle_event_id' => $event->id, 'event_type' => $eventType]);
+            $this->audit($eligibility->organisation_id, 'review_eligibility.'.$eventType, $eligibility->id, $correlationId);
+            $record->forceFill([
+                'status' => 'completed', 'outcome_type' => 'review_eligibility_lifecycle',
+                'outcome_id' => $event->id, 'response_status' => 202,
+            ])->save();
+
+            return [
+                'status' => 'accepted', 'event_id' => $payload['event_id'],
+                'eligibility_id' => $eligibility->id, 'eligibility_status' => $eligibility->status,
+                'correlation_id' => $correlationId,
+            ];
+        });
+    }
+
+    private function scheduleEligibleInvitation(ReviewEligibility $eligibility, string $correlationId): void
+    {
+        $performance = $eligibility->performance()->firstOrFail();
+        $scheduledFor = $this->scheduleTime->forPerformance(
+            $performance,
+            (int) config('encore.provider_v2.invitation_delay_hours'),
+        );
+        if ($scheduledFor->isPast()) {
+            $scheduledFor = now();
+        }
+        $verified = $eligibility->status === 'verified_eligible';
+        $issuing = (bool) config('encore.provider_v2.invitation_issuing_enabled');
+        ReviewInvitationSchedule::query()->where('eligibility_id', $eligibility->id)->update([
+            'scheduled_for' => $scheduledFor,
+            'status' => $verified && $issuing ? 'scheduled' : 'suppressed',
+            'suppression_reason' => $verified
+                ? ($issuing ? null : 'invitation_issuing_disabled')
+                : 'attendance_pending',
+            'claimed_at' => null,
+            'cancelled_at' => null,
+            'correlation_id' => $correlationId,
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function cancelSchedule(ReviewEligibility $eligibility, string $reason): void
+    {
+        ReviewInvitationSchedule::query()->where('eligibility_id', $eligibility->id)
+            ->whereIn('status', ['scheduled', 'suppressed', 'processing', 'issued'])
+            ->update([
+                'status' => 'cancelled', 'suppression_reason' => $reason,
+                'cancelled_at' => now(), 'claimed_at' => null, 'updated_at' => now(),
+            ]);
+    }
+
+    private function revokeUnusedInvitations(ReviewEligibility $eligibility, string $reason): void
+    {
+        ReviewInvitation::query()->where('eligibility_id', $eligibility->id)
+            ->whereNull('used_at')->whereNull('revoked_at')
+            ->update([
+                'status' => 'revoked', 'revoked_at' => now(),
+                'revocation_reason' => $reason, 'updated_at' => now(),
+            ]);
+    }
+
     private function idempotency(ProviderAuthority $authority, string $operation, string $key): ?IntegrationIdempotencyRecord
     {
         return IntegrationIdempotencyRecord::query()
@@ -226,9 +382,12 @@ final class ProviderV2ReviewEligibilityService
             throw new RuntimeException('Idempotency reservation could not be resolved.');
         }
 
-        return $operation === 'review-eligibility:write'
-            ? $this->existingEligibilityOutcome($existing, $digest, $correlationId)
-            : $this->existingWithdrawalOutcome($existing, $digest, $correlationId);
+        return match ($operation) {
+            'review-eligibility:write' => $this->existingEligibilityOutcome($existing, $digest, $correlationId),
+            'review-withdrawal:write' => $this->existingWithdrawalOutcome($existing, $digest, $correlationId),
+            'review-eligibility-lifecycle:write' => $this->existingLifecycleOutcome($existing, $digest, $correlationId),
+            default => throw new RuntimeException('Unsupported provider idempotency operation.'),
+        };
     }
 
     /** @return array<string, mixed> */
@@ -254,6 +413,23 @@ final class ProviderV2ReviewEligibilityService
         $record->forceFill(['last_correlation_id' => $correlationId])->save();
 
         return ['status' => 'duplicate', 'event_id' => $withdrawal->provider_event_id, 'correlation_id' => $correlationId];
+    }
+
+    /** @return array<string, mixed> */
+    private function existingLifecycleOutcome(IntegrationIdempotencyRecord $record, string $digest, string $correlationId): array
+    {
+        if (! hash_equals($record->request_digest, $digest)) {
+            return ['error' => 'idempotency_conflict'];
+        }
+        $event = ReviewEligibilityLifecycleEvent::findOrFail($record->outcome_id);
+        $eligibility = ReviewEligibility::findOrFail($event->eligibility_id);
+        $record->forceFill(['last_correlation_id' => $correlationId])->save();
+
+        return [
+            'status' => 'duplicate', 'event_id' => $event->provider_event_id,
+            'eligibility_id' => $eligibility->id, 'eligibility_status' => $eligibility->status,
+            'correlation_id' => $correlationId,
+        ];
     }
 
     /** @param array<string, mixed> $payload */

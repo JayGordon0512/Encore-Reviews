@@ -34,10 +34,15 @@ Route::prefix('v2/integrations')->middleware(['provider.v2.enabled', 'provider.v
     Route::post('/review-invitation-withdrawals', [ReviewEligibilityController::class, 'withdrawal'])
         ->defaults('provider_operation', 'review-withdrawal:write')
         ->name('provider.v2.review-eligibilities.withdraw');
+    Route::post('/review-eligibility-lifecycle-events', [ReviewEligibilityController::class, 'lifecycle'])
+        ->defaults('provider_operation', 'review-eligibility-lifecycle:write')
+        ->name('provider.v2.review-eligibilities.lifecycle');
 });
 
 Route::prefix('ticketpal')->middleware(['ticketpal.secret', 'ticketpal.event'])->group(function (): void {
     Route::post('/shows/upsert', ShowUpsertController::class)->name('ticketpal.shows.upsert');
     Route::post('/performances/upsert', PerformanceUpsertController::class)->name('ticketpal.performances.upsert');
-    Route::post('/invitations', [ReviewInvitationController::class, 'store'])->name('ticketpal.invitations.store');
+    Route::post('/invitations', [ReviewInvitationController::class, 'store'])
+        ->middleware('ticketpal.legacy-invitations')
+        ->name('ticketpal.invitations.store');
 });

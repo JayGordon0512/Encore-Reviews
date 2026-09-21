@@ -142,6 +142,8 @@ final class ProcessMailgunDeliveryEventService
                 'error_code' => $reasonCode ?: 'mailgun_temporary_failure',
             ]);
 
+            $this->scheduleTemporaryFailureRetry($delivery);
+
             return 'applied';
         }
 
@@ -156,6 +158,41 @@ final class ProcessMailgunDeliveryEventService
         $this->suppressContact($delivery->invitation, $reason);
 
         return 'applied';
+    }
+
+    private function scheduleTemporaryFailureRetry(ReviewInvitationDelivery $delivery): void
+    {
+        $schedule = ReviewInvitationSchedule::query()->lockForUpdate()->find($delivery->schedule_id);
+        if (! $schedule || $schedule->status !== 'issued') {
+            return;
+        }
+
+        $delivery->invitation->forceFill([
+            'status' => 'revoked',
+            'revoked_at' => now(),
+            'revocation_reason' => 'mailgun_temporary_failure',
+        ])->save();
+
+        $maxAttempts = (int) config('encore.invitations.max_attempts');
+        if ($schedule->attempts >= $maxAttempts) {
+            $schedule->forceFill([
+                'status' => 'dead_lettered',
+                'dead_lettered_at' => now(),
+                'last_error_code' => 'mailgun_temporary_failure',
+            ])->save();
+
+            return;
+        }
+
+        $schedule->forceFill([
+            'status' => 'scheduled',
+            'scheduled_for' => now()->addMinutes(
+                max(1, (int) config('encore.mailgun_webhooks.temporary_retry_delay_minutes')),
+            ),
+            'claimed_at' => null,
+            'issued_at' => null,
+            'last_error_code' => 'mailgun_temporary_failure',
+        ])->save();
     }
 
     private function suppressContact(ReviewInvitation $invitation, string $reason): void
@@ -173,7 +210,6 @@ final class ProcessMailgunDeliveryEventService
         ReviewInvitation::query()
             ->whereKey($invitation->id)
             ->whereNull('used_at')
-            ->whereNull('revoked_at')
             ->update([
                 'status' => 'revoked',
                 'revoked_at' => now(),

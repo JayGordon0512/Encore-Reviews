@@ -1,6 +1,6 @@
 # Encore Reviews staging Droplet
 
-This stack deploys the `main` branch to a dedicated staging Droplet using the
+This stack deploys the `development` branch to a dedicated staging Droplet using the
 same containerised operating pattern as TicketPal staging. It runs PHP 8.4,
 Nginx, the database-backed invitation queue worker and the Laravel scheduler.
 PostgreSQL runs as a private container with a persistent Docker volume, while
@@ -66,7 +66,7 @@ sudo /usr/local/sbin/deploy-encore-staging
 ```
 
 The wrapper accepts no arguments, serialises deployments, refuses a dirty
-checkout, fast-forwards to the exact `origin/main` revision, builds immutable
+checkout, fast-forwards to the exact `origin/development` revision, builds immutable
 images, runs migrations, clears caches and verifies web, worker and scheduler
 container health.
 

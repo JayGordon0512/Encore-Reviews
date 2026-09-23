@@ -25,7 +25,7 @@ final class ProviderApiV2ContractFixtureTest extends TestCase
         }
 
         self::assertSame('2.0.0-proposed.1', $manifest['fixture_version']);
-        self::assertSame($manifest['fixture_version'], $manifest['contract_version']);
+        self::assertSame('2.1.0', $manifest['contract_version']);
         self::assertSame('HMAC-SHA256', $manifest['signature_algorithm']);
         self::assertSame('v1=', $manifest['signature_prefix']);
         self::assertCount(15, $manifest['cases']);
@@ -34,7 +34,7 @@ final class ProviderApiV2ContractFixtureTest extends TestCase
         self::assertFileExists($contractPath);
         $contract = file_get_contents($contractPath);
         self::assertIsString($contract);
-        self::assertStringContainsString('version: 2.0.0-proposed.1', $contract);
+        self::assertStringContainsString('version: '.$manifest['contract_version'], $contract);
         self::assertStringContainsString('/integrations/review-invitation-eligibilities:', $contract);
         self::assertStringContainsString('/integrations/review-invitation-withdrawals:', $contract);
 

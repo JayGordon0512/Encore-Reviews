@@ -48,7 +48,7 @@ readonly IMAGE_TAG="${REMOTE_REVISION:0:7}"
 if run_as_deploy git -C "${REPOSITORY}" show-ref --verify --quiet refs/heads/development; then
     run_as_deploy git -C "${REPOSITORY}" switch development
 else
-    run_as_deploy git -C "${REPOSITORY}" switch --create development --track origin/development
+    run_as_deploy git -C "${REPOSITORY}" switch --create development origin/development
 fi
 run_as_deploy git -C "${REPOSITORY}" merge --ff-only "${REMOTE_REVISION}"
 

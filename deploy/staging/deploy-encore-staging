@@ -40,12 +40,16 @@ if [[ -n "$(run_as_deploy git -C "${REPOSITORY}" status --porcelain)" ]]; then
     exit 1
 fi
 
-run_as_deploy git -C "${REPOSITORY}" fetch origin development
+run_as_deploy git -C "${REPOSITORY}" fetch origin development:refs/remotes/origin/development
 
 readonly REMOTE_REVISION="$(run_as_deploy git -C "${REPOSITORY}" rev-parse --verify origin/development^{commit})"
 readonly IMAGE_TAG="${REMOTE_REVISION:0:7}"
 
-run_as_deploy git -C "${REPOSITORY}" switch development
+if run_as_deploy git -C "${REPOSITORY}" show-ref --verify --quiet refs/heads/development; then
+    run_as_deploy git -C "${REPOSITORY}" switch development
+else
+    run_as_deploy git -C "${REPOSITORY}" switch --create development --track origin/development
+fi
 run_as_deploy git -C "${REPOSITORY}" merge --ff-only "${REMOTE_REVISION}"
 
 export APP_IMAGE_TAG="${IMAGE_TAG}"

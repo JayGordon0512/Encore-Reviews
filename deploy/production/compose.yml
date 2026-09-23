@@ -1,0 +1,72 @@
+name: encore-production
+
+x-app: &app
+  image: encore-production/app:${APP_IMAGE_TAG:?APP_IMAGE_TAG must be set}
+  env_file:
+    - ${PRODUCTION_ENV_FILE:-/opt/encore-production/shared/.env}
+  environment:
+    DB_HOST: database
+    DB_PORT: 5432
+    DB_DATABASE: ${POSTGRES_DB:-encore}
+    DB_USERNAME: ${POSTGRES_USER:-encore}
+    DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+  restart: unless-stopped
+  volumes:
+    - app-storage:/var/www/html/storage
+  depends_on:
+    database:
+      condition: service_healthy
+
+services:
+  database:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-encore}
+      POSTGRES_USER: ${POSTGRES_USER:-encore}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+    volumes:
+      - database-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  app:
+    <<: *app
+    build:
+      context: ../..
+      dockerfile: deploy/production/Dockerfile
+      target: app
+
+  web:
+    build:
+      context: ../..
+      dockerfile: deploy/production/Dockerfile
+      target: web
+    image: encore-production/web:${APP_IMAGE_TAG:?APP_IMAGE_TAG must be set}
+    restart: unless-stopped
+    ports:
+      - 127.0.0.1:8081:80
+    volumes:
+      - app-storage:/var/www/html/storage:ro
+    depends_on:
+      - app
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://127.0.0.1/up"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  worker:
+    <<: *app
+    command: php artisan queue:work database --queue=invitations --tries=1 --timeout=60 --sleep=3 --max-time=3600
+
+  scheduler:
+    <<: *app
+    command: php artisan schedule:work
+
+volumes:
+  app-storage:
+  database-data:

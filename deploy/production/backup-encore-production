@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+
+set -Eeuo pipefail
+
+readonly REPOSITORY="/opt/encore-production/repository"
+readonly ENV_FILE="/opt/encore-production/shared/.env"
+readonly COMPOSE_FILE="${REPOSITORY}/deploy/production/compose.yml"
+readonly BACKUP_DIRECTORY="/opt/encore-production/backups"
+readonly LOCK_FILE="/run/lock/encore-production-backup.lock"
+
+if [[ "${EUID}" -ne 0 || "$#" -ne 0 ]]; then
+    echo "This command must run as root and accepts no arguments." >&2
+    exit 1
+fi
+
+for required_path in "${REPOSITORY}/.git" "${ENV_FILE}" "${COMPOSE_FILE}"; do
+    [[ -e "${required_path}" ]] || {
+        echo "Required backup path is missing: ${required_path}" >&2
+        exit 1
+    }
+done
+
+install -d -o root -g root -m 0700 "${BACKUP_DIRECTORY}"
+exec 9>"${LOCK_FILE}"
+flock --nonblock 9 || {
+    echo "A production backup is already running." >&2
+    exit 1
+}
+
+export APP_IMAGE_TAG="${APP_IMAGE_TAG:-backup}"
+
+compose() {
+    docker compose --env-file "${ENV_FILE}" --file "${COMPOSE_FILE}" "$@"
+}
+
+readonly TIMESTAMP="$(date -u +%Y%m%dT%H%M%SZ)"
+readonly FILENAME="encore-production-${TIMESTAMP}.dump"
+readonly TEMPORARY_FILE="${BACKUP_DIRECTORY}/.${FILENAME}.tmp"
+readonly BACKUP_FILE="${BACKUP_DIRECTORY}/${FILENAME}"
+
+cleanup() {
+    rm -f "${TEMPORARY_FILE}"
+}
+trap cleanup EXIT
+
+compose exec -T database sh -c \
+    'exec pg_dump --username="$POSTGRES_USER" --dbname="$POSTGRES_DB" --format=custom --no-owner --no-acl' \
+    > "${TEMPORARY_FILE}"
+compose exec -T database pg_restore --list < "${TEMPORARY_FILE}" > /dev/null
+chmod 0600 "${TEMPORARY_FILE}"
+mv "${TEMPORARY_FILE}" "${BACKUP_FILE}"
+
+find "${BACKUP_DIRECTORY}" -type f -name 'encore-production-*.dump' -mtime +14 -delete
+
+printf 'BACKUP=%s\n' "${BACKUP_FILE}"
+printf 'VERIFIED=yes\n'
+printf 'HEALTH=ok\n'

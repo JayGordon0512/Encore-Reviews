@@ -1,0 +1,112 @@
+#!/usr/bin/env bash
+
+set -Eeuo pipefail
+
+readonly DEPLOY_USER="encore-deploy"
+readonly REPOSITORY="/opt/encore-production/repository"
+readonly ENV_FILE="/opt/encore-production/shared/.env"
+readonly COMPOSE_FILE="${REPOSITORY}/deploy/production/compose.yml"
+readonly LOCK_FILE="/run/lock/encore-production-deploy.lock"
+
+if [[ "${EUID}" -ne 0 || "$#" -ne 0 ]]; then
+    echo "This command must run as root and accepts no arguments." >&2
+    exit 1
+fi
+
+for required_path in "${REPOSITORY}/.git" "${ENV_FILE}" "${COMPOSE_FILE}"; do
+    [[ -e "${required_path}" ]] || {
+        echo "Required deployment path is missing: ${required_path}" >&2
+        exit 1
+    }
+done
+
+grep -Eq '^APP_ENV="?production"?$' "${ENV_FILE}"
+grep -Eq '^APP_DEBUG="?false"?$' "${ENV_FILE}"
+for gate in \
+    ENCORE_TICKETPAL_LEGACY_INVITATION_ENABLED \
+    ENCORE_PROVIDER_V2_INGRESS_ENABLED \
+    ENCORE_PROVIDER_V2_INVITATION_ISSUING_ENABLED \
+    ENCORE_ORGANISER_INVITATION_ISSUING_ENABLED; do
+    grep -Eq "^${gate}=\"?false\"?$" "${ENV_FILE}" || {
+        echo "Production safety gate must remain disabled: ${gate}" >&2
+        exit 1
+    }
+done
+
+exec 9>"${LOCK_FILE}"
+flock --nonblock 9 || {
+    echo "A production deployment is already running." >&2
+    exit 1
+}
+
+run_as_deploy() {
+    runuser -u "${DEPLOY_USER}" -- "$@"
+}
+
+[[ -z "$(run_as_deploy git -C "${REPOSITORY}" status --porcelain)" ]] || {
+    echo "The production repository has uncommitted changes; deployment stopped." >&2
+    exit 1
+}
+
+run_as_deploy git -C "${REPOSITORY}" fetch origin main:refs/remotes/origin/main
+readonly REMOTE_REVISION="$(run_as_deploy git -C "${REPOSITORY}" rev-parse --verify origin/main^{commit})"
+readonly IMAGE_TAG="${REMOTE_REVISION:0:7}"
+
+if run_as_deploy git -C "${REPOSITORY}" show-ref --verify --quiet refs/heads/main; then
+    run_as_deploy git -C "${REPOSITORY}" switch main
+else
+    run_as_deploy git -C "${REPOSITORY}" switch --create main origin/main
+fi
+run_as_deploy git -C "${REPOSITORY}" merge --ff-only "${REMOTE_REVISION}"
+
+export APP_IMAGE_TAG="${IMAGE_TAG}"
+
+compose() {
+    docker compose --env-file "${ENV_FILE}" --file "${COMPOSE_FILE}" "$@"
+}
+
+compose config --quiet
+compose build app web
+
+if docker container inspect encore-production-database-1 >/dev/null 2>&1; then
+    /usr/local/sbin/backup-encore-production
+fi
+
+readonly PREVIOUS_APP_IMAGE="$(docker inspect --format='{{.Config.Image}}' encore-production-app-1 2>/dev/null || true)"
+readonly PREVIOUS_TAG="${PREVIOUS_APP_IMAGE##*:}"
+CUTOVER_STARTED=false
+
+rollback() {
+    local exit_code="$?"
+    if [[ "${CUTOVER_STARTED}" == true && -n "${PREVIOUS_APP_IMAGE}" ]]; then
+        echo "Production verification failed; restoring application images ${PREVIOUS_TAG}." >&2
+        APP_IMAGE_TAG="${PREVIOUS_TAG}" compose up --detach --no-build
+    fi
+    exit "${exit_code}"
+}
+trap rollback ERR
+
+CUTOVER_STARTED=true
+compose up --detach --no-build
+compose exec -T app php artisan migrate --force
+compose exec -T app php artisan optimize:clear
+
+for _ in {1..30}; do
+    [[ "$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' encore-production-web-1)" == healthy ]] && break
+    sleep 2
+done
+
+[[ "$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' encore-production-web-1)" == healthy ]]
+docker exec encore-production-web-1 wget --quiet --output-document=- http://127.0.0.1/up | grep --quiet "Application up"
+
+[[ "$(docker inspect --format='{{.Config.Image}}' encore-production-app-1)" == "encore-production/app:${IMAGE_TAG}" ]]
+[[ "$(docker inspect --format='{{.Config.Image}}' encore-production-web-1)" == "encore-production/web:${IMAGE_TAG}" ]]
+
+for container in encore-production-database-1 encore-production-app-1 encore-production-worker-1 encore-production-scheduler-1; do
+    [[ "$(docker inspect --format='{{.State.Status}}' "${container}")" == running ]]
+done
+
+trap - ERR
+compose ps
+printf 'DEPLOYED_REVISION=%s\n' "${REMOTE_REVISION}"
+printf 'HEALTH=ok\n'
